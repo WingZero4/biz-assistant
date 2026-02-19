@@ -1,0 +1,22 @@
+# Core
+Django==6.0.2
+python-dotenv>=1.0
+
+# AI
+anthropic>=0.40
+openai>=1.50
+
+# Messaging
+twilio>=9.0
+sendgrid>=6.11
+
+# Security
+django-axes>=8.0
+
+# Utilities
+tzdata>=2024.1
+
+# Dev/Test
+pytest-django>=4.8
+factory-boy>=3.3
+responses>=0.25
