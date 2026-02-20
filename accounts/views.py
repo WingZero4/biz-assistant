@@ -1,19 +1,73 @@
+from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.utils import timezone
+
+from tasks.models import Task, TaskPlan
+
+from .forms import ProfileForm, SignupForm
 
 
 def signup_view(request):
-    # TODO: Sprint 3 — signup form + UserProfile creation
-    return HttpResponse('Signup — coming soon')
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
+
+    if request.method == 'POST':
+        form = SignupForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return redirect('onboarding:step_1')
+    else:
+        form = SignupForm()
+
+    return render(request, 'registration/signup.html', {'form': form})
 
 
 @login_required
 def dashboard_view(request):
-    # TODO: Sprint 4 — dashboard with today's tasks + progress
-    return HttpResponse('Dashboard — coming soon')
+    if not request.user.profile.is_onboarded:
+        return redirect('onboarding:step_1')
+
+    today = timezone.now().date()
+    active_plan = TaskPlan.objects.filter(
+        user=request.user, status='ACTIVE',
+    ).first()
+
+    today_tasks = []
+    recent_completed = []
+    upcoming_tasks = []
+
+    if active_plan:
+        today_tasks = active_plan.tasks.filter(due_date=today).exclude(
+            status__in=['DONE', 'SKIPPED'],
+        )
+        recent_completed = active_plan.tasks.filter(
+            status='DONE',
+        ).order_by('-completed_at')[:5]
+        upcoming_tasks = active_plan.tasks.filter(
+            due_date__gt=today, status='PENDING',
+        )[:10]
+
+    return render(request, 'dashboard/home.html', {
+        'plan': active_plan,
+        'today_tasks': today_tasks,
+        'recent_completed': recent_completed,
+        'upcoming_tasks': upcoming_tasks,
+        'today': today,
+    })
 
 
 @login_required
 def profile_view(request):
-    # TODO: Sprint 3 — edit notification preferences
-    return HttpResponse('Profile — coming soon')
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated.')
+            return redirect('accounts:profile')
+    else:
+        form = ProfileForm(instance=request.user.profile)
+
+    return render(request, 'registration/profile.html', {'form': form})

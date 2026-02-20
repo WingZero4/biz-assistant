@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}All Tasks — BizAssistant{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">All Tasks</h2>
+
+{% if plan %}
+<!-- Filters -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <select class="form-select" onchange="window.location.href='?status='+this.value+'&category={{ category_filter }}'">
+            <option value="">All Statuses</option>
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-6">
+        <select class="form-select" onchange="window.location.href='?status={{ status_filter }}&category='+this.value">
+            <option value="">All Categories</option>
+            {% for val, label in category_choices %}
+            <option value="{{ val }}" {% if category_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<!-- Tasks table -->
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Day</th>
+            <th>Task</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Due</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td>{{ task.day_number }}</td>
+            <td><a href="{% url 'tasks:detail' task.pk %}">{{ task.title }}</a></td>
+            <td><span class="badge bg-secondary">{{ task.get_category_display }}</span></td>
+            <td>
+                {% if task.status == 'DONE' %}
+                <span class="badge bg-success">Done</span>
+                {% elif task.status == 'SKIPPED' %}
+                <span class="badge bg-warning">Skipped</span>
+                {% elif task.status == 'SENT' %}
+                <span class="badge bg-info">Sent</span>
+                {% else %}
+                <span class="badge bg-light text-dark">{{ task.get_status_display }}</span>
+                {% endif %}
+            </td>
+            <td>{{ task.due_date }}</td>
+            <td>
+                {% if task.status in 'PENDING,SENT' %}
+                <form method="post" action="{% url 'tasks:mark_done' task.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success">Done</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted">No tasks found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div class="alert alert-info">No active plan.</div>
+{% endif %}
+{% endblock %}

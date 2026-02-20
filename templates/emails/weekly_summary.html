@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #333;">Weekly Progress Report</h2>
+    <p style="color: #555;">{{ summary_html|safe }}</p>
+
+    <div style="background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 5px;">
+        <strong>This Week:</strong>
+        <ul>
+            <li>Completed: {{ completed_count }} tasks</li>
+            <li>Skipped: {{ skipped_count }} tasks</li>
+            <li>Completion rate: {{ completion_rate }}%</li>
+        </ul>
+    </div>
+
+    <div style="background: #e8f5e9; padding: 15px; margin: 15px 0; border-radius: 5px;">
+        <strong>Overall Progress:</strong> {{ overall_pct }}% of plan complete
+        <div style="background: #ddd; height: 10px; border-radius: 5px; margin-top: 8px;">
+            <div style="background: #4caf50; height: 10px; border-radius: 5px; width: {{ overall_pct }}%;"></div>
+        </div>
+    </div>
+
+    <p style="color: #888; font-size: 0.9em;">
+        Log in to your dashboard to see your full plan and upcoming tasks.
+    </p>
+</body>
+</html>

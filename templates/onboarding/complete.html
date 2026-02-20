@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Welcome — BizAssistant{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h2 class="mb-3">Your Plan is Ready!</h2>
+        <p class="lead">Welcome, {{ profile.business_name }}!</p>
+
+        {% if assessment.summary %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <p class="mb-0">{{ assessment.summary }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if assessment.viability_score %}
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3>{{ assessment.viability_score }}/10</h3>
+                        <small class="text-muted">Viability Score</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3>{{ assessment.time_to_revenue }}</h3>
+                        <small class="text-muted">Est. Time to Revenue</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h3>30 days</h3>
+                        <small class="text-muted">Plan Duration</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <a href="{% url 'accounts:dashboard' %}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

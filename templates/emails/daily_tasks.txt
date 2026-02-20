@@ -1,0 +1,10 @@
+TODAY'S BUSINESS TASKS
+=====================
+
+{{ message }}
+
+{% for task in tasks %}{{ forloop.counter }}. {{ task.title }} (~{{ task.estimated_minutes }} min)
+   {{ task.description }}
+
+{% endfor %}
+Reply DONE or SKIP via text, or log in to your dashboard.
