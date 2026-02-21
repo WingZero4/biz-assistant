@@ -67,6 +67,26 @@
 </div>
 
 <div class="alert alert-info">
-    Clicking "Generate My Plan" will use AI to create a personalized 30-day action plan with templates, checklists, and guides tailored to your business. This may take a few seconds.
+    Clicking "Generate My Plan" will use AI to create a personalized 30-day action plan with templates, checklists, and guides tailored to your business. This may take a moment.
 </div>
+
+<!-- Loading overlay (hidden by default) -->
+<div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+    <div class="spinner-border text-primary mb-3" style="width:3rem; height:3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <h5>Generating your personalized plan...</h5>
+    <p class="text-muted">Our AI is analyzing your business profile and creating tasks with resources. This usually takes 15-30 seconds.</p>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    var overlay = document.getElementById('loading-overlay');
+    overlay.style.display = 'flex';
+    // Disable submit button to prevent double-click
+    var btn = this.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+});
+</script>
 {% endblock %}
