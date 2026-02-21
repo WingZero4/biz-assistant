@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .models import Task, TaskPlan
+from .models import Task, TaskPlan, TaskResource
 from .services import TaskProgressService
 
 
@@ -37,7 +37,11 @@ def task_list_view(request):
 @login_required
 def task_detail_view(request, pk):
     task = get_object_or_404(Task, pk=pk, plan__user=request.user)
-    return render(request, 'dashboard/task_detail.html', {'task': task})
+    resources = task.resources.all()
+    return render(request, 'dashboard/task_detail.html', {
+        'task': task,
+        'resources': resources,
+    })
 
 
 @login_required
@@ -68,3 +72,17 @@ def mark_skip_view(request, pk):
         messages.error(request, str(e))
 
     return redirect(request.POST.get('next', 'accounts:dashboard'))
+
+
+@login_required
+def toggle_resource_view(request, pk):
+    """Toggle a checklist resource item's completion status."""
+    if request.method != 'POST':
+        return redirect('tasks:list')
+
+    resource = get_object_or_404(
+        TaskResource, pk=pk, task__plan__user=request.user,
+    )
+    resource.is_completed = not resource.is_completed
+    resource.save(update_fields=['is_completed'])
+    return redirect('tasks:detail', pk=resource.task.pk)

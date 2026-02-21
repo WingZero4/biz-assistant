@@ -19,7 +19,7 @@ from ai.prompts import (
 )
 from onboarding.models import BusinessProfile
 
-from .models import Task, TaskPlan
+from .models import ResourceTemplate, Task, TaskPlan, TaskResource
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +32,15 @@ class TaskGenerationService:
         profile: BusinessProfile,
         duration_days: int = 30,
     ) -> TaskPlan:
-        """Generate a full task plan using Claude. Creates TaskPlan + Tasks."""
+        """Generate a full task plan using Claude. Creates TaskPlan + Tasks + Resources."""
         assessment = profile.ai_assessment or {}
         today = timezone.now().date()
+
+        # Build display values for skills and platforms
+        skill_map = dict(BusinessProfile.SKILL_CHOICES)
+        skills_display = [skill_map.get(s, s) for s in (profile.owner_skills or [])]
+        platform_map = dict(BusinessProfile.PLATFORM_CHOICES)
+        platforms_display = [platform_map.get(p, p) for p in (profile.social_platforms or [])]
 
         system_prompt = PLAN_GENERATION_SYSTEM.format(duration_days=duration_days)
         user_prompt = PLAN_GENERATION_USER.format(
@@ -45,6 +51,18 @@ class TaskGenerationService:
             goals=', '.join(profile.goals) if profile.goals else 'Not specified',
             budget_range=profile.get_budget_range_display(),
             location=profile.location or 'Not specified',
+            niche=profile.niche or 'Not specified',
+            business_model=profile.get_business_model_display(),
+            unique_selling_point=profile.unique_selling_point or 'Not specified',
+            known_competitors=', '.join(profile.known_competitors) if profile.known_competitors else 'None listed',
+            owner_skills=', '.join(skills_display) if skills_display else 'None listed',
+            business_experience=profile.get_business_experience_display(),
+            hours_per_day=profile.hours_per_day,
+            has_website='Yes' if profile.has_website else 'No',
+            has_domain='Yes' if profile.has_domain else 'No',
+            has_branding='Yes' if profile.has_branding else 'No',
+            social_platforms=', '.join(platforms_display) if platforms_display else 'None',
+            has_email_list='Yes' if profile.has_email_list else 'No',
             assessment_summary=assessment.get('summary', 'No assessment available'),
             focus_areas=', '.join(assessment.get('focus_areas', [])),
             first_steps=', '.join(assessment.get('first_steps', [])),
@@ -73,7 +91,7 @@ class TaskGenerationService:
 
         for task_data in tasks_data:
             day_num = task_data.get('day_number', 1)
-            Task.objects.create(
+            task = Task.objects.create(
                 plan=plan,
                 title=task_data.get('title', 'Untitled task'),
                 description=task_data.get('description', ''),
@@ -85,11 +103,95 @@ class TaskGenerationService:
                 sort_order=task_data.get('sort_order', 0),
             )
 
+            # Create resources for this task
+            resources_data = task_data.get('resources', [])
+            TaskGenerationService._create_task_resources(
+                task, resources_data, profile,
+            )
+
         logger.info(
             'Generated plan %d with %d tasks for user %s',
             plan.pk, len(tasks_data), profile.user.username,
         )
         return plan
+
+    @staticmethod
+    def _find_library_match(resource_type, title, category, business_type):
+        """Search the resource library for a matching reviewed template."""
+        # Prefer REVIEWED templates that match business type + category
+        matches = ResourceTemplate.objects.filter(
+            status='REVIEWED',
+            resource_type=resource_type,
+        )
+        # Try business_type + category match first
+        for tmpl in matches:
+            biz_types = tmpl.business_types or []
+            cats = tmpl.categories or []
+            if business_type.lower() in [b.lower() for b in biz_types] and category in cats:
+                return tmpl
+        # Fallback: category match only
+        for tmpl in matches:
+            cats = tmpl.categories or []
+            if category in cats:
+                return tmpl
+        return None
+
+    @staticmethod
+    def _create_task_resources(task, resources_data, profile):
+        """Create TaskResource records from AI-generated resource data.
+
+        For each resource:
+        1. Check library for an existing reviewed template
+        2. If found, clone it (increment times_used)
+        3. If not found, save AI output as new DRAFT ResourceTemplate + TaskResource
+        """
+        for idx, res in enumerate(resources_data):
+            res_type = res.get('type', 'GUIDE')
+            title = res.get('title', 'Resource')
+            content = res.get('content', '')
+            url = res.get('url', '')
+
+            # Check library for existing reviewed template
+            library_match = TaskGenerationService._find_library_match(
+                res_type, title, task.category, profile.business_type,
+            )
+
+            if library_match:
+                # Reuse reviewed template
+                library_match.times_used += 1
+                library_match.save(update_fields=['times_used'])
+                TaskResource.objects.create(
+                    task=task,
+                    template=library_match,
+                    title=library_match.title,
+                    resource_type=library_match.resource_type,
+                    content=library_match.content,
+                    external_url=library_match.external_url,
+                    sort_order=idx,
+                )
+            else:
+                # Save as new DRAFT in the library
+                template = ResourceTemplate.objects.create(
+                    title=title,
+                    resource_type=res_type,
+                    content=content,
+                    external_url=url,
+                    business_types=[profile.business_type],
+                    categories=[task.category],
+                    tags=[],
+                    status='DRAFT',
+                    times_used=1,
+                    ai_model_used=settings.ANTHROPIC_MODEL,
+                )
+                TaskResource.objects.create(
+                    task=task,
+                    template=template,
+                    title=title,
+                    resource_type=res_type,
+                    content=content,
+                    external_url=url,
+                    sort_order=idx,
+                )
 
     @staticmethod
     def get_daily_tasks(user, date=None):

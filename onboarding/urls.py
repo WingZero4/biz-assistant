@@ -9,5 +9,7 @@ urlpatterns = [
     path('step/2/', views.wizard_step_2, name='step_2'),
     path('step/3/', views.wizard_step_3, name='step_3'),
     path('step/4/', views.wizard_step_4, name='step_4'),
+    path('step/5/', views.wizard_step_5, name='step_5'),
+    path('step/6/', views.wizard_step_6, name='step_6'),
     path('complete/', views.onboarding_complete, name='complete'),
 ]

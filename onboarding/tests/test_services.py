@@ -20,6 +20,21 @@ class OnboardingServiceTest(TestCase):
             'target_audience': 'Local families',
             'budget_range': 'LOW',
             'location': 'Austin, TX',
+            # Phase 2 fields
+            'owner_skills': ['social_media', 'design'],
+            'business_experience': 'SOME',
+            'hours_per_day': 4,
+            'education_background': 'Culinary school',
+            'niche': 'Vegan bakery',
+            'known_competitors': 'Sweet Green\nBake & Co',
+            'unique_selling_point': '100% plant-based ingredients',
+            'business_model': 'PRODUCT',
+            'has_website': False,
+            'has_social_media': True,
+            'social_platforms': ['instagram', 'facebook'],
+            'has_email_list': False,
+            'has_domain': True,
+            'has_branding': False,
         }
 
     def test_create_business_profile(self):
@@ -28,6 +43,18 @@ class OnboardingServiceTest(TestCase):
         self.assertEqual(profile.business_name, 'Test Bakery')
         self.assertEqual(profile.goals, ['First 10 customers', 'Launch website'])
         self.assertEqual(profile.user, self.user)
+
+    def test_create_profile_with_enhanced_fields(self):
+        profile = OnboardingService.create_business_profile(self.user, self.form_data)
+        self.assertEqual(profile.owner_skills, ['social_media', 'design'])
+        self.assertEqual(profile.business_experience, 'SOME')
+        self.assertEqual(profile.hours_per_day, 4)
+        self.assertEqual(profile.niche, 'Vegan bakery')
+        self.assertEqual(profile.known_competitors, ['Sweet Green', 'Bake & Co'])
+        self.assertEqual(profile.business_model, 'PRODUCT')
+        self.assertTrue(profile.has_social_media)
+        self.assertFalse(profile.has_website)
+        self.assertEqual(profile.social_platforms, ['instagram', 'facebook'])
 
     def test_create_profile_parses_goals(self):
         self.form_data['goals'] = 'Goal A\n\nGoal B\n  \nGoal C'

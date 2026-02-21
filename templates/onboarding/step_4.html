@@ -1,37 +1,3 @@
 {% extends "onboarding/wizard_base.html" %}
-{% block wizard_title %}Review & Launch Your Plan{% endblock %}
+{% block wizard_title %}Industry & Competition{% endblock %}
 {% block back_url %}{% url 'onboarding:step_3' %}{% endblock %}
-{% block submit_text %}Generate My Plan{% endblock %}
-
-{% block wizard_content %}
-<div class="card mb-3">
-    <div class="card-body">
-        <h5 class="card-title">{{ data.business_name }}</h5>
-        <p><strong>Type:</strong> {{ data.business_type }}</p>
-        <p><strong>Stage:</strong> {{ data.stage }}</p>
-        {% if data.description %}<p><strong>Description:</strong> {{ data.description }}</p>{% endif %}
-    </div>
-</div>
-
-{% if goals_list %}
-<div class="card mb-3">
-    <div class="card-body">
-        <h6>Goals</h6>
-        <ul class="mb-0">
-            {% for goal in goals_list %}<li>{{ goal }}</li>{% endfor %}
-        </ul>
-    </div>
-</div>
-{% endif %}
-
-<div class="card mb-3">
-    <div class="card-body">
-        <p><strong>Budget:</strong> {{ data.budget_range }}</p>
-        <p class="mb-0"><strong>Location:</strong> {{ data.location|default:"Not specified" }}</p>
-    </div>
-</div>
-
-<div class="alert alert-info">
-    Clicking "Generate My Plan" will use AI to create a personalized 30-day action plan for your business. This may take a few seconds.
-</div>
-{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "onboarding/wizard_base.html" %}
+{% load form_tags %}
+{% block wizard_title %}Review & Launch Your Plan{% endblock %}
+{% block back_url %}{% url 'onboarding:step_5' %}{% endblock %}
+{% block submit_text %}Generate My Plan{% endblock %}
+
+{% block wizard_content %}
+<div class="card mb-3">
+    <div class="card-header fw-bold">Business Basics</div>
+    <div class="card-body">
+        <p><strong>Name:</strong> {{ data.business_name }}</p>
+        <p><strong>Type:</strong> {{ data.business_type }}</p>
+        <p><strong>Stage:</strong> {{ data.stage }}</p>
+        <p><strong>Model:</strong> {{ data.business_model|default:"Not specified" }}</p>
+        {% if data.niche %}<p><strong>Niche:</strong> {{ data.niche }}</p>{% endif %}
+        {% if data.description %}<p><strong>Description:</strong> {{ data.description }}</p>{% endif %}
+    </div>
+</div>
+
+{% if goals_list %}
+<div class="card mb-3">
+    <div class="card-header fw-bold">Goals</div>
+    <div class="card-body">
+        <ul class="mb-0">
+            {% for goal in goals_list %}<li>{{ goal }}</li>{% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-header fw-bold">Your Profile</div>
+    <div class="card-body">
+        <p><strong>Experience:</strong> {{ data.business_experience|default:"Not specified" }}</p>
+        <p><strong>Hours/day:</strong> {{ data.hours_per_day|default:"2" }}</p>
+        {% if skills_display %}
+        <p><strong>Skills:</strong> {{ skills_display|join:", " }}</p>
+        {% endif %}
+        {% if data.education_background %}
+        <p><strong>Education:</strong> {{ data.education_background }}</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-bold">Digital Presence</div>
+    <div class="card-body">
+        <ul class="mb-0">
+            <li>Website: {% if data.has_website %}Yes{% else %}No{% endif %}</li>
+            <li>Domain: {% if data.has_domain %}Yes{% else %}No{% endif %}</li>
+            <li>Branding: {% if data.has_branding %}Yes{% else %}No{% endif %}</li>
+            <li>Email list: {% if data.has_email_list %}Yes{% else %}No{% endif %}</li>
+            {% if platforms_display %}
+            <li>Social media: {{ platforms_display|join:", " }}</li>
+            {% else %}
+            <li>Social media: None yet</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <p><strong>Budget:</strong> {{ data.budget_range|default:"Not specified" }}</p>
+        <p class="mb-0"><strong>Location:</strong> {{ data.location|default:"Not specified" }}</p>
+    </div>
+</div>
+
+<div class="alert alert-info">
+    Clicking "Generate My Plan" will use AI to create a personalized 30-day action plan with templates, checklists, and guides tailored to your business. This may take a few seconds.
+</div>
+{% endblock %}

@@ -30,22 +30,50 @@ class OnboardingService:
         goals_text = form_data.get('goals', '')
         goals = [g.strip() for g in goals_text.split('\n') if g.strip()]
 
-        profile = BusinessProfile.objects.create(
-            user=user,
-            business_name=form_data['business_name'],
-            business_type=form_data['business_type'],
-            stage=form_data['stage'],
-            description=form_data.get('description', ''),
-            goals=goals,
-            target_audience=form_data.get('target_audience', ''),
-            budget_range=form_data.get('budget_range', 'BOOTSTRAP'),
-            location=form_data.get('location', ''),
+        # Parse competitors from newline-separated text
+        competitors_text = form_data.get('known_competitors', '')
+        competitors = [c.strip() for c in competitors_text.split('\n') if c.strip()]
+
+        defaults = {
+            'business_name': form_data['business_name'],
+            'business_type': form_data['business_type'],
+            'stage': form_data['stage'],
+            'description': form_data.get('description', ''),
+            'goals': goals,
+            'target_audience': form_data.get('target_audience', ''),
+            'budget_range': form_data.get('budget_range', 'BOOTSTRAP'),
+            'location': form_data.get('location', ''),
+            # Skills & Experience
+            'owner_skills': form_data.get('owner_skills', []),
+            'business_experience': form_data.get('business_experience', 'NONE'),
+            'hours_per_day': int(form_data.get('hours_per_day', 2)),
+            'education_background': form_data.get('education_background', ''),
+            # Industry Details
+            'niche': form_data.get('niche', ''),
+            'known_competitors': competitors,
+            'unique_selling_point': form_data.get('unique_selling_point', ''),
+            'business_model': form_data.get('business_model', 'PRODUCT'),
+            # Digital Presence
+            'has_website': form_data.get('has_website', False),
+            'has_social_media': form_data.get('has_social_media', False),
+            'social_platforms': form_data.get('social_platforms', []),
+            'has_email_list': form_data.get('has_email_list', False),
+            'has_domain': form_data.get('has_domain', False),
+            'has_branding': form_data.get('has_branding', False),
+        }
+        profile, _created = BusinessProfile.objects.update_or_create(
+            user=user, defaults=defaults,
         )
         return profile
 
     @staticmethod
     def run_ai_assessment(profile: BusinessProfile) -> dict:
         """Send profile to Claude for assessment. Updates profile fields."""
+        skill_map = dict(BusinessProfile.SKILL_CHOICES)
+        skills_display = [skill_map.get(s, s) for s in (profile.owner_skills or [])]
+        platform_map = dict(BusinessProfile.PLATFORM_CHOICES)
+        platforms_display = [platform_map.get(p, p) for p in (profile.social_platforms or [])]
+
         user_prompt = ONBOARDING_ASSESSMENT_USER.format(
             business_name=profile.business_name,
             business_type=profile.business_type,
@@ -55,6 +83,18 @@ class OnboardingService:
             target_audience=profile.target_audience or 'Not specified',
             budget_range=profile.get_budget_range_display(),
             location=profile.location or 'Not specified',
+            niche=profile.niche or 'Not specified',
+            business_model=profile.get_business_model_display(),
+            unique_selling_point=profile.unique_selling_point or 'Not specified',
+            known_competitors=', '.join(profile.known_competitors) if profile.known_competitors else 'None listed',
+            owner_skills=', '.join(skills_display) if skills_display else 'None listed',
+            business_experience=profile.get_business_experience_display(),
+            hours_per_day=profile.hours_per_day,
+            has_website='Yes' if profile.has_website else 'No',
+            has_domain='Yes' if profile.has_domain else 'No',
+            has_branding='Yes' if profile.has_branding else 'No',
+            social_platforms=', '.join(platforms_display) if platforms_display else 'None',
+            has_email_list='Yes' if profile.has_email_list else 'No',
         )
 
         try:

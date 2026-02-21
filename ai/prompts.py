@@ -28,13 +28,29 @@ ONBOARDING_ASSESSMENT_USER = """Business Profile:
 - Goals: {goals}
 - Target Audience: {target_audience}
 - Budget: {budget_range}
-- Location: {location}"""
+- Location: {location}
+- Niche: {niche}
+- Business Model: {business_model}
+- Unique Selling Point: {unique_selling_point}
+- Known Competitors: {known_competitors}
+
+Owner Profile:
+- Skills: {owner_skills}
+- Business Experience: {business_experience}
+- Hours Available Per Day: {hours_per_day}
+
+Digital Presence:
+- Has Website: {has_website}
+- Has Domain: {has_domain}
+- Has Branding: {has_branding}
+- Social Platforms: {social_platforms}
+- Has Email List: {has_email_list}"""
 
 # ──────────────────────────────────────────────
 # Task Plan Generation (Claude — complex reasoning)
 # ──────────────────────────────────────────────
 
-PLAN_GENERATION_SYSTEM = """You are a business launch task planner. Given a business assessment, generate a {duration_days}-day action plan.
+PLAN_GENERATION_SYSTEM = """You are a business launch task planner. Given a business assessment, generate a {duration_days}-day action plan with actionable resources for each task.
 
 Rules:
 1. Each day has 2-3 tasks maximum.
@@ -45,12 +61,25 @@ Rules:
 6. Tasks within a day should have sort_order (0, 1, 2).
 7. Lighter tasks on weekend days (6, 7, 13, 14, 20, 21, 27, 28).
 8. Make tasks specific to their business type — not generic advice.
+9. Tailor task difficulty to the owner's available hours per day and experience level.
+10. Skip tasks for things they already have (e.g. don't suggest "create social media" if they already have social accounts).
+11. Each task should include 1-3 resources to help the user complete it.
 
 Categories: LEGAL, FINANCE, MARKETING, PRODUCT, SALES, OPERATIONS, DIGITAL, PLANNING
 Difficulty: EASY (under 30 min), MEDIUM (30-90 min), HARD (2+ hours)
 
+Resource types:
+- TEMPLATE: Copy-and-customize text (e.g. business plan outline, email template)
+- CHECKLIST: Step-by-step sub-tasks with checkboxes
+- GUIDE: How-to article with specific instructions
+- LINK: URL to a useful external tool or service
+- WORKSHEET: Structured questions or exercises
+
 Return ONLY valid JSON:
-{{"tasks": [{{"day_number": 1, "sort_order": 0, "title": "...", "description": "...", "category": "...", "difficulty": "...", "estimated_minutes": 30}}]}}"""
+{{"tasks": [{{"day_number": 1, "sort_order": 0, "title": "...", "description": "...", "category": "...", "difficulty": "...", "estimated_minutes": 30, "resources": [{{"type": "CHECKLIST", "title": "...", "content": "- [ ] Step 1\\n- [ ] Step 2\\n..."}}]}}]}}
+
+For LINK resources, include a "url" field. For all others, include "content" in markdown format.
+Make resources specific and immediately usable — not generic placeholders."""
 
 PLAN_GENERATION_USER = """Business Assessment:
 - Name: {business_name}
@@ -60,11 +89,29 @@ PLAN_GENERATION_USER = """Business Assessment:
 - Goals: {goals}
 - Budget: {budget_range}
 - Location: {location}
-- AI Assessment Summary: {assessment_summary}
+- Niche: {niche}
+- Business Model: {business_model}
+- Unique Selling Point: {unique_selling_point}
+- Known Competitors: {known_competitors}
+
+Owner Profile:
+- Skills: {owner_skills}
+- Experience Level: {business_experience}
+- Hours Available Per Day: {hours_per_day}
+
+Current Digital Presence:
+- Has Website: {has_website}
+- Has Domain: {has_domain}
+- Has Branding: {has_branding}
+- Social Platforms: {social_platforms}
+- Has Email List: {has_email_list}
+
+AI Assessment:
+- Summary: {assessment_summary}
 - Focus Areas: {focus_areas}
 - Recommended First Steps: {first_steps}
 
-Generate a {duration_days}-day task plan tailored to this specific business."""
+Generate a {duration_days}-day task plan with resources tailored to this specific business. Include templates, checklists, and guides that are specific to their business type and location."""
 
 # ──────────────────────────────────────────────
 # Daily Message Formatting (OpenAI — cheap, high volume)

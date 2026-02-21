@@ -104,3 +104,75 @@ class Task(models.Model):
 
     def __str__(self):
         return f'Day {self.day_number}: {self.title} [{self.status}]'
+
+
+RESOURCE_TYPE_CHOICES = [
+    ('TEMPLATE', 'Template'),
+    ('CHECKLIST', 'Checklist'),
+    ('GUIDE', 'Reference Guide'),
+    ('LINK', 'External Link'),
+    ('WORKSHEET', 'Worksheet'),
+]
+
+
+class ResourceTemplate(models.Model):
+    """Reusable resource library — grows from AI-generated drafts."""
+    STATUS_CHOICES = [
+        ('DRAFT', 'AI-Generated Draft'),
+        ('REVIEWED', 'Reviewed & Approved'),
+        ('ARCHIVED', 'Archived'),
+    ]
+
+    title = models.CharField(max_length=255)
+    resource_type = models.CharField(max_length=10, choices=RESOURCE_TYPE_CHOICES)
+    content = models.TextField(
+        blank=True, help_text='Template/guide/checklist content (markdown)',
+    )
+    external_url = models.URLField(blank=True)
+    business_types = models.JSONField(
+        default=list, blank=True,
+        help_text='Business types this applies to, e.g. ["bakery", "restaurant"]',
+    )
+    categories = models.JSONField(
+        default=list, blank=True,
+        help_text='Task categories: ["LEGAL", "MARKETING"]',
+    )
+    tags = models.JSONField(
+        default=list, blank=True,
+        help_text='Freeform tags for search: ["llc", "texas"]',
+    )
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default='DRAFT',
+    )
+    times_used = models.PositiveIntegerField(default=0)
+    ai_model_used = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-times_used', '-created_at']
+
+    def __str__(self):
+        return f'[{self.get_resource_type_display()}] {self.title} ({self.get_status_display()})'
+
+
+class TaskResource(models.Model):
+    """Resource attached to a specific task for a specific user."""
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='resources')
+    template = models.ForeignKey(
+        ResourceTemplate, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='usages',
+    )
+    title = models.CharField(max_length=255)
+    resource_type = models.CharField(max_length=10, choices=RESOURCE_TYPE_CHOICES)
+    content = models.TextField(blank=True)
+    external_url = models.URLField(blank=True)
+    is_completed = models.BooleanField(default=False)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['sort_order']
+
+    def __str__(self):
+        return f'{self.get_resource_type_display()}: {self.title}'

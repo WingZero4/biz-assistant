@@ -48,4 +48,70 @@
         {% endif %}
     </div>
 </div>
+
+{% if resources %}
+<h4 class="mt-4 mb-3">Resources</h4>
+
+{% for resource in resources %}
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            {% if resource.resource_type == 'TEMPLATE' %}
+            <span class="badge bg-primary me-2">Template</span>
+            {% elif resource.resource_type == 'CHECKLIST' %}
+            <span class="badge bg-success me-2">Checklist</span>
+            {% elif resource.resource_type == 'GUIDE' %}
+            <span class="badge bg-info me-2">Guide</span>
+            {% elif resource.resource_type == 'LINK' %}
+            <span class="badge bg-warning text-dark me-2">Link</span>
+            {% elif resource.resource_type == 'WORKSHEET' %}
+            <span class="badge bg-secondary me-2">Worksheet</span>
+            {% endif %}
+            <strong>{{ resource.title }}</strong>
+        </div>
+        {% if resource.resource_type == 'CHECKLIST' %}
+        <form method="post" action="{% url 'tasks:toggle_resource' resource.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm {% if resource.is_completed %}btn-outline-success{% else %}btn-outline-secondary{% endif %}">
+                {% if resource.is_completed %}&#10003; Done{% else %}Mark Done{% endif %}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if resource.resource_type == 'LINK' and resource.external_url %}
+        <a href="{{ resource.external_url }}" target="_blank" rel="noopener" class="btn btn-outline-primary">
+            Open Link &rarr;
+        </a>
+        {% if resource.content %}
+        <p class="mt-2 text-muted">{{ resource.content }}</p>
+        {% endif %}
+
+        {% elif resource.resource_type == 'TEMPLATE' %}
+        <div class="position-relative">
+            <pre class="bg-light p-3 rounded" style="white-space: pre-wrap;">{{ resource.content }}</pre>
+            <button class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2 copy-btn"
+                    onclick="navigator.clipboard.writeText(this.closest('.position-relative').querySelector('pre').textContent); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 1500);">
+                Copy
+            </button>
+        </div>
+
+        {% elif resource.resource_type == 'CHECKLIST' %}
+        <div class="checklist-content">
+            {{ resource.content|linebreaksbr }}
+        </div>
+
+        {% elif resource.resource_type == 'GUIDE' %}
+        <div class="guide-content" style="white-space: pre-wrap;">{{ resource.content }}</div>
+
+        {% elif resource.resource_type == 'WORKSHEET' %}
+        <div class="worksheet-content bg-light p-3 rounded" style="white-space: pre-wrap;">{{ resource.content }}</div>
+
+        {% else %}
+        <p>{{ resource.content }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+{% endif %}
 {% endblock %}

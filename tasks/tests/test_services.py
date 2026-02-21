@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from onboarding.models import BusinessProfile
-from tasks.models import Task, TaskPlan
+from tasks.models import ResourceTemplate, Task, TaskPlan, TaskResource
 from tasks.services import TaskGenerationService, TaskProgressService
 
 
@@ -71,6 +71,59 @@ class TaskGenerationServiceTest(TestCase):
         plan = TaskGenerationService.generate_plan(self.profile)
         self.assertEqual(plan.tasks.count(), 2)
         self.assertEqual(plan.status, 'ACTIVE')
+
+    @patch('tasks.services.call_claude_json')
+    def test_generate_plan_creates_resources(self, mock_claude):
+        mock_claude.return_value = {
+            'tasks': [
+                {'day_number': 1, 'sort_order': 0, 'title': 'Register business',
+                 'description': 'Go to city hall.', 'category': 'LEGAL',
+                 'difficulty': 'MEDIUM', 'estimated_minutes': 60,
+                 'resources': [
+                     {'type': 'CHECKLIST', 'title': 'Registration Steps',
+                      'content': '- [ ] Step 1\n- [ ] Step 2'},
+                     {'type': 'LINK', 'title': 'SOS Portal',
+                      'url': 'https://sos.state.tx.us'},
+                 ]},
+            ],
+        }
+        plan = TaskGenerationService.generate_plan(self.profile)
+        task = plan.tasks.first()
+        self.assertEqual(task.resources.count(), 2)
+        # Should have created ResourceTemplate drafts
+        self.assertEqual(ResourceTemplate.objects.count(), 2)
+        self.assertEqual(ResourceTemplate.objects.filter(status='DRAFT').count(), 2)
+
+    @patch('tasks.services.call_claude_json')
+    def test_generate_plan_reuses_reviewed_templates(self, mock_claude):
+        # Pre-create a reviewed template
+        reviewed = ResourceTemplate.objects.create(
+            title='Standard LLC Checklist', resource_type='CHECKLIST',
+            content='- [ ] Choose name\n- [ ] File articles',
+            business_types=['Bakery'], categories=['LEGAL'],
+            status='REVIEWED', times_used=3,
+        )
+        mock_claude.return_value = {
+            'tasks': [
+                {'day_number': 1, 'sort_order': 0, 'title': 'Register LLC',
+                 'description': 'File with state.', 'category': 'LEGAL',
+                 'difficulty': 'MEDIUM', 'estimated_minutes': 60,
+                 'resources': [
+                     {'type': 'CHECKLIST', 'title': 'LLC Registration Steps',
+                      'content': '- [ ] AI generated steps'},
+                 ]},
+            ],
+        }
+        plan = TaskGenerationService.generate_plan(self.profile)
+        task = plan.tasks.first()
+        resource = task.resources.first()
+        # Should have used the reviewed template instead of creating new
+        self.assertEqual(resource.template, reviewed)
+        self.assertEqual(resource.content, reviewed.content)
+        reviewed.refresh_from_db()
+        self.assertEqual(reviewed.times_used, 4)
+        # Should NOT have created a new ResourceTemplate
+        self.assertEqual(ResourceTemplate.objects.count(), 1)
 
     @patch('tasks.services.call_claude_json')
     def test_generate_plan_fallback_on_error(self, mock_claude):
