@@ -14,6 +14,9 @@
         <p><strong>Model:</strong> {{ data.business_model|default:"Not specified" }}</p>
         {% if data.niche %}<p><strong>Niche:</strong> {{ data.niche }}</p>{% endif %}
         {% if data.description %}<p><strong>Description:</strong> {{ data.description }}</p>{% endif %}
+        {% if data.current_revenue %}<p><strong>Revenue:</strong> {{ data.current_revenue }}</p>{% endif %}
+        {% if data.team_size %}<p><strong>Team:</strong> {{ data.team_size }}</p>{% endif %}
+        {% if data.biggest_challenges %}<p class="mb-0"><strong>Challenges:</strong> {{ data.biggest_challenges }}</p>{% endif %}
     </div>
 </div>
 

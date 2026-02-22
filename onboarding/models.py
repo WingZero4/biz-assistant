@@ -102,6 +102,20 @@ class BusinessProfile(models.Model):
         max_length=20, choices=MODEL_CHOICES, default='PRODUCT',
     )
 
+    # Stage-specific context
+    current_revenue = models.CharField(
+        max_length=20, blank=True, default='',
+        help_text='Revenue bracket for existing businesses',
+    )
+    team_size = models.CharField(
+        max_length=20, blank=True, default='',
+        help_text='Team size for growing/established businesses',
+    )
+    biggest_challenges = models.TextField(
+        blank=True, default='',
+        help_text='Current challenges (for existing businesses)',
+    )
+
     # Digital Presence
     has_website = models.BooleanField(default=False)
     has_social_media = models.BooleanField(default=False)

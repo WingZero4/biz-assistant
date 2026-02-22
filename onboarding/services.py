@@ -53,6 +53,10 @@ class OnboardingService:
             'known_competitors': competitors,
             'unique_selling_point': form_data.get('unique_selling_point', ''),
             'business_model': form_data.get('business_model', 'PRODUCT'),
+            # Stage-specific context
+            'current_revenue': form_data.get('current_revenue', ''),
+            'team_size': form_data.get('team_size', ''),
+            'biggest_challenges': form_data.get('biggest_challenges', ''),
             # Digital Presence
             'has_website': form_data.get('has_website', False),
             'has_social_media': form_data.get('has_social_media', False),
@@ -90,6 +94,9 @@ class OnboardingService:
             owner_skills=', '.join(skills_display) if skills_display else 'None listed',
             business_experience=profile.get_business_experience_display(),
             hours_per_day=profile.hours_per_day,
+            current_revenue=profile.current_revenue or 'Not specified',
+            team_size=profile.team_size or 'Not specified',
+            biggest_challenges=profile.biggest_challenges or 'None listed',
             has_website='Yes' if profile.has_website else 'No',
             has_domain='Yes' if profile.has_domain else 'No',
             has_branding='Yes' if profile.has_branding else 'No',

@@ -39,6 +39,11 @@ Owner Profile:
 - Business Experience: {business_experience}
 - Hours Available Per Day: {hours_per_day}
 
+Business Context:
+- Current Revenue: {current_revenue}
+- Team Size: {team_size}
+- Biggest Challenges: {biggest_challenges}
+
 Digital Presence:
 - Has Website: {has_website}
 - Has Domain: {has_domain}
@@ -98,6 +103,11 @@ Owner Profile:
 - Skills: {owner_skills}
 - Experience Level: {business_experience}
 - Hours Available Per Day: {hours_per_day}
+
+Business Context:
+- Current Revenue: {current_revenue}
+- Team Size: {team_size}
+- Biggest Challenges: {biggest_challenges}
 
 Current Digital Presence:
 - Has Website: {has_website}

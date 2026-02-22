@@ -48,17 +48,21 @@ def wizard_step_2(request):
     if not _has_basics(request):
         return redirect('onboarding:step_1')
 
+    data = _get_wizard_data(request)
+    stage = data.get('stage', 'IDEA')
+
     if request.method == 'POST':
-        form = BusinessGoalsForm(request.POST)
+        form = BusinessGoalsForm(request.POST, stage=stage)
         if form.is_valid():
             _save_wizard_data(request, form.cleaned_data)
             return redirect('onboarding:step_3')
     else:
-        form = BusinessGoalsForm(initial=_get_wizard_data(request))
+        form = BusinessGoalsForm(initial=data, stage=stage)
 
     return render(request, 'onboarding/step_2.html', {
         'form': form, 'step': 2, 'total_steps': TOTAL_STEPS,
-        'step_title': 'Goals & Audience',
+        'step_title': 'Goals & Context',
+        'stage': stage,
     })
 
 
