@@ -67,6 +67,71 @@
 </div>
 {% endif %}
 
+<!-- Streak & Achievements -->
+<div class="row mb-4 g-3">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h1 class="display-4 {% if current_streak >= 7 %}text-warning{% elif current_streak >= 3 %}text-success{% else %}text-muted{% endif %} mb-1">{{ current_streak }}</h1>
+                <p class="text-muted mb-0">Day Streak</p>
+                {% if current_streak >= 7 %}
+                <small class="text-warning">On fire!</small>
+                {% elif current_streak >= 3 %}
+                <small class="text-success">Building momentum!</small>
+                {% elif current_streak == 0 %}
+                <small class="text-muted">Complete a task to start your streak</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Recent Achievements</div>
+            <div class="card-body">
+                {% if recent_achievements %}
+                <ul class="list-unstyled mb-0">
+                    {% for achievement in recent_achievements %}
+                    <li class="mb-2">
+                        <strong>{{ achievement.title }}</strong>
+                        <br><small class="text-muted">{{ achievement.description }} &mdash; {{ achievement.earned_at|timesince }} ago</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">Complete tasks to earn achievements!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Continuation Prompt -->
+{% if continuation %}
+<div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+    <div>
+        {% if continuation.reason == 'completed' %}
+        <strong>Plan Complete!</strong> You've finished all tasks. Ready for your next phase?
+        {% else %}
+        <strong>Plan Expired.</strong> Your plan period has ended. Continue with a fresh phase?
+        {% endif %}
+    </div>
+    <form method="post" action="{% url 'tasks:continue_plan' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success btn-sm">Generate Next Phase</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Weekly Pulse Prompt -->
+{% if not pulse_done_this_week %}
+<div class="alert alert-primary d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <strong>Weekly Check-in:</strong> How did your week go? Track your progress with a quick check-in.
+    </div>
+    <a href="{% url 'accounts:pulse' %}" class="btn btn-primary btn-sm">Check In</a>
+</div>
+{% endif %}
+
 <!-- Today's Tasks -->
 <h4 class="mb-3">Today's Tasks ({{ today }})</h4>
 {% if today_tasks %}

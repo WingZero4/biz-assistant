@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Weekly Check-in — BizAssistant{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Weekly Check-in</h2>
+    <a href="{% url 'accounts:pulse_history' %}" class="btn btn-outline-secondary btn-sm">View History</a>
+</div>
+
+<p class="text-muted mb-4">
+    Week of <strong>{{ week_of }}</strong> &mdash;
+    {% if is_update %}Updating your check-in{% else %}How did this week go?{% endif %}
+</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <label for="{{ form.revenue_this_week.id_for_label }}" class="form-label fw-bold">{{ form.revenue_this_week.label }}</label>
+                    {{ form.revenue_this_week }}
+                    {% if form.revenue_this_week.errors %}<div class="text-danger small mt-1">{{ form.revenue_this_week.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <label for="{{ form.new_customers.id_for_label }}" class="form-label fw-bold">{{ form.new_customers.label }}</label>
+                    {{ form.new_customers }}
+                    {% if form.new_customers.errors %}<div class="text-danger small mt-1">{{ form.new_customers.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <label for="{{ form.hours_worked.id_for_label }}" class="form-label fw-bold">{{ form.hours_worked.label }}</label>
+                    {{ form.hours_worked }}
+                    {% if form.hours_worked.errors %}<div class="text-danger small mt-1">{{ form.hours_worked.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <label class="form-label fw-bold">{{ form.energy_level.label }}</label>
+            <div class="d-flex gap-3 flex-wrap">
+                {% for radio in form.energy_level %}
+                <div class="form-check">
+                    {{ radio.tag }}
+                    <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+                {% endfor %}
+            </div>
+            {% if form.energy_level.errors %}<div class="text-danger small mt-1">{{ form.energy_level.errors.0 }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label for="{{ form.biggest_win.id_for_label }}" class="form-label fw-bold">{{ form.biggest_win.label }}</label>
+            {{ form.biggest_win }}
+        </div>
+        <div class="col-md-6">
+            <label for="{{ form.biggest_blocker.id_for_label }}" class="form-label fw-bold">{{ form.biggest_blocker.label }}</label>
+            {{ form.biggest_blocker }}
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">{{ form.notes.label }}</label>
+        {{ form.notes }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">{% if is_update %}Update Check-in{% else %}Save Check-in{% endif %}</button>
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-link">Cancel</a>
+</form>
+{% endblock %}

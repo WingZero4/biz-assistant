@@ -16,7 +16,12 @@
         {% if data.description %}<p><strong>Description:</strong> {{ data.description }}</p>{% endif %}
         {% if data.current_revenue %}<p><strong>Revenue:</strong> {{ data.current_revenue }}</p>{% endif %}
         {% if data.team_size %}<p><strong>Team:</strong> {{ data.team_size }}</p>{% endif %}
-        {% if data.biggest_challenges %}<p class="mb-0"><strong>Challenges:</strong> {{ data.biggest_challenges }}</p>{% endif %}
+        {% if challenges_list %}
+        <p class="mb-1"><strong>Challenges:</strong></p>
+        <ul class="mb-0">
+            {% for challenge in challenges_list %}<li>{{ challenge }}</li>{% endfor %}
+        </ul>
+        {% endif %}
     </div>
 </div>
 

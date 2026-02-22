@@ -142,11 +142,52 @@ class BusinessProfile(models.Model):
         return f'{self.business_name} ({self.user.username})'
 
 
+class WeeklyPulse(models.Model):
+    ENERGY_CHOICES = [
+        (1, 'Exhausted'),
+        (2, 'Low energy'),
+        (3, 'Normal'),
+        (4, 'Energized'),
+        (5, 'On fire'),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='weekly_pulses',
+    )
+    business_profile = models.ForeignKey(
+        BusinessProfile, on_delete=models.CASCADE, related_name='weekly_pulses',
+    )
+    week_of = models.DateField(help_text='Monday of the week')
+    revenue_this_week = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+    )
+    new_customers = models.PositiveSmallIntegerField(default=0)
+    hours_worked = models.PositiveSmallIntegerField(default=0)
+    energy_level = models.PositiveSmallIntegerField(
+        choices=ENERGY_CHOICES, default=3,
+    )
+    biggest_win = models.TextField(blank=True)
+    biggest_blocker = models.TextField(blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [('user', 'week_of')]
+        ordering = ['-week_of']
+
+    def __str__(self):
+        return f'{self.user.username} — Week of {self.week_of}'
+
+
 class Conversation(models.Model):
     ROLE_CHOICES = [
         ('user', 'User'),
         ('assistant', 'Assistant'),
         ('system', 'System'),
+    ]
+    TYPE_CHOICES = [
+        ('SYSTEM', 'System'),
+        ('CHAT', 'Chat'),
     ]
 
     user = models.ForeignKey(
@@ -154,6 +195,10 @@ class Conversation(models.Model):
     )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     content = models.TextField()
+    conversation_type = models.CharField(
+        max_length=10, choices=TYPE_CHOICES, default='SYSTEM',
+    )
+    session_id = models.CharField(max_length=36, blank=True, db_index=True)
     metadata = models.JSONField(
         default=dict, blank=True,
         help_text='Token usage, model info, step number',
@@ -165,3 +210,47 @@ class Conversation(models.Model):
 
     def __str__(self):
         return f'{self.role}: {self.content[:50]}'
+
+
+class GeneratedDocument(models.Model):
+    DOC_TYPE_CHOICES = [
+        ('SOCIAL_POST', 'Social Media Post'),
+        ('EMAIL_CAMPAIGN', 'Email Campaign'),
+        ('BIZ_PLAN_OUTLINE', 'Business Plan Outline'),
+        ('ELEVATOR_PITCH', 'Elevator Pitch'),
+        ('PRODUCT_DESCRIPTION', 'Product Description'),
+        ('JOB_POSTING', 'Job Posting'),
+        ('CUSTOMER_EMAIL', 'Customer Email'),
+        ('AD_COPY', 'Ad Copy'),
+        ('BLOG_POST', 'Blog Post Outline'),
+    ]
+    PLATFORM_CHOICES = [
+        ('', 'General'),
+        ('instagram', 'Instagram'),
+        ('facebook', 'Facebook'),
+        ('linkedin', 'LinkedIn'),
+        ('twitter', 'X / Twitter'),
+        ('tiktok', 'TikTok'),
+        ('email', 'Email'),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='generated_documents',
+    )
+    business_profile = models.ForeignKey(
+        BusinessProfile, on_delete=models.CASCADE, related_name='generated_documents',
+    )
+    doc_type = models.CharField(max_length=20, choices=DOC_TYPE_CHOICES)
+    platform = models.CharField(max_length=20, blank=True, choices=PLATFORM_CHOICES)
+    title = models.CharField(max_length=255)
+    prompt_used = models.TextField(blank=True)
+    content = models.TextField()
+    is_favorite = models.BooleanField(default=False)
+    ai_model_used = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.get_doc_type_display()}: {self.title}'

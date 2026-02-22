@@ -78,3 +78,47 @@ def call_claude_json(system_prompt: str, user_prompt: str, max_tokens: int = 409
     except json.JSONDecodeError as e:
         logger.error('Claude JSON parse error: %s\nRaw response: %s', e, text[:500])
         raise ClaudeClientError(f'Failed to parse Claude JSON response: {e}') from e
+
+
+def call_claude_chat(
+    system_prompt: str,
+    messages: list[dict],
+    max_tokens: int = 4096,
+) -> str:
+    """Call Claude API with multi-turn message history.
+
+    Args:
+        system_prompt: System message for Claude.
+        messages: List of {'role': 'user'|'assistant', 'content': '...'}.
+        max_tokens: Maximum tokens in response.
+
+    Returns:
+        Text response from Claude.
+
+    Raises:
+        ClaudeClientError: If the API call fails.
+    """
+    if not settings.ANTHROPIC_API_KEY:
+        raise ClaudeClientError('ANTHROPIC_API_KEY not configured')
+
+    client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
+
+    try:
+        response = client.messages.create(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=max_tokens,
+            system=system_prompt,
+            messages=messages,
+        )
+        text = response.content[0].text
+        logger.info(
+            'Claude chat API call: model=%s, messages=%d, input=%d, output=%d',
+            settings.ANTHROPIC_MODEL,
+            len(messages),
+            response.usage.input_tokens,
+            response.usage.output_tokens,
+        )
+        return text
+    except anthropic.APIError as e:
+        logger.error('Claude chat API error: %s', e)
+        raise ClaudeClientError(f'Claude chat API error: {e}') from e

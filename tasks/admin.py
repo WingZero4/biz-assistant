@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ResourceTemplate, Task, TaskPlan, TaskResource
+from .models import Achievement, ResourceTemplate, StreakRecord, Task, TaskPlan, TaskResource
 
 
 class TaskInline(admin.TabularInline):
@@ -52,6 +52,21 @@ class TaskAdmin(admin.ModelAdmin):
     def resource_count(self, obj):
         return obj.resources.count()
     resource_count.short_description = 'Resources'
+
+
+@admin.register(Achievement)
+class AchievementAdmin(admin.ModelAdmin):
+    list_display = ['title', 'user', 'badge', 'earned_at']
+    list_filter = ['badge']
+    search_fields = ['user__username', 'title']
+    readonly_fields = ['earned_at']
+
+
+@admin.register(StreakRecord)
+class StreakRecordAdmin(admin.ModelAdmin):
+    list_display = ['user', 'date', 'tasks_completed']
+    list_filter = ['date']
+    search_fields = ['user__username']
 
 
 @admin.action(description='Approve selected templates (mark as Reviewed)')

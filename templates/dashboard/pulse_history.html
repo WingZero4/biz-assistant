@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Pulse History — BizAssistant{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Pulse History</h2>
+    <a href="{% url 'accounts:pulse' %}" class="btn btn-primary btn-sm">This Week's Check-in</a>
+</div>
+
+{% if pulses %}
+<div class="table-responsive">
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>Week of</th>
+                <th>Revenue</th>
+                <th>New Customers</th>
+                <th>Hours</th>
+                <th>Energy</th>
+                <th>Win</th>
+                <th>Blocker</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pulse in pulses %}
+            <tr>
+                <td>{{ pulse.week_of }}</td>
+                <td>{% if pulse.revenue_this_week %}${{ pulse.revenue_this_week }}{% else %}&mdash;{% endif %}</td>
+                <td>{{ pulse.new_customers }}</td>
+                <td>{{ pulse.hours_worked }}h</td>
+                <td>{{ pulse.get_energy_level_display }}</td>
+                <td>{{ pulse.biggest_win|truncatewords:10 }}</td>
+                <td>{{ pulse.biggest_blocker|truncatewords:10 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+    No check-ins yet. <a href="{% url 'accounts:pulse' %}">Complete your first weekly check-in</a> to start tracking your progress.
+</div>
+{% endif %}
+{% endblock %}

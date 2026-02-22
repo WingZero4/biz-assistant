@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Content Generator — BizAssistant{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Content Generator</h2>
+
+<!-- Generation Form -->
+<div class="card mb-4">
+    <div class="card-header fw-bold">Create New Content</div>
+    <div class="card-body">
+        <form id="generate-form">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="{{ form.doc_type.id_for_label }}" class="form-label">{{ form.doc_type.label }}</label>
+                    {{ form.doc_type }}
+                </div>
+                <div class="col-md-4">
+                    <label for="{{ form.platform.id_for_label }}" class="form-label">{{ form.platform.label }}</label>
+                    {{ form.platform }}
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" id="generate-btn" class="btn btn-primary w-100">Generate</button>
+                </div>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label for="{{ form.topic.id_for_label }}" class="form-label">{{ form.topic.label }}</label>
+                    {{ form.topic }}
+                </div>
+                <div class="col-md-6">
+                    <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Loading indicator -->
+<div id="generate-loading" class="alert alert-info" style="display:none;">
+    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+    Generating your content... This may take a moment.
+</div>
+
+<!-- Generated result area -->
+<div id="result-area" class="card mb-4" style="display:none;">
+    <div class="card-header fw-bold d-flex justify-content-between align-items-center">
+        <span id="result-title"></span>
+        <button class="btn btn-outline-secondary btn-sm" id="copy-btn" onclick="copyResult()">Copy</button>
+    </div>
+    <div class="card-body">
+        <pre id="result-content" class="mb-0" style="white-space:pre-wrap; font-family:inherit;"></pre>
+    </div>
+</div>
+
+<!-- Previous documents -->
+{% if documents %}
+<h4 class="mt-4 mb-3">Previous Content</h4>
+{% for doc in documents %}
+<div class="card mb-2">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h6 class="mb-1">{{ doc.title }}</h6>
+                <small class="text-muted">
+                    {{ doc.get_doc_type_display }}
+                    {% if doc.platform %} &middot; {{ doc.get_platform_display }}{% endif %}
+                    &middot; {{ doc.created_at|timesince }} ago
+                </small>
+            </div>
+            <div>
+                <form method="post" action="{% url 'accounts:document_favorite' doc.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm {% if doc.is_favorite %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                        {% if doc.is_favorite %}Favorited{% else %}Favorite{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+        <details class="mt-2">
+            <summary class="text-muted" style="cursor:pointer;">Show content</summary>
+            <pre class="mt-2 p-2 bg-light rounded" style="white-space:pre-wrap; font-family:inherit;">{{ doc.content }}</pre>
+        </details>
+    </div>
+</div>
+{% endfor %}
+{% endif %}
+
+<script>
+(function() {
+    var form = document.getElementById('generate-form');
+    var loading = document.getElementById('generate-loading');
+    var resultArea = document.getElementById('result-area');
+    var resultTitle = document.getElementById('result-title');
+    var resultContent = document.getElementById('result-content');
+    var generateBtn = document.getElementById('generate-btn');
+
+    function getCookie(name) {
+        var value = '; ' + document.cookie;
+        var parts = value.split('; ' + name + '=');
+        if (parts.length === 2) return parts.pop().split(';').shift();
+    }
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(form);
+
+        loading.style.display = 'block';
+        resultArea.style.display = 'none';
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Generating...';
+
+        fetch('{% url "accounts:document_generate" %}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCookie('csrftoken') },
+            body: formData,
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            loading.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Generate';
+
+            if (data.content) {
+                resultTitle.textContent = data.title || 'Generated Content';
+                resultContent.textContent = data.content;
+                resultArea.style.display = 'block';
+            } else if (data.error) {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(function(err) {
+            loading.style.display = 'none';
+            generateBtn.disabled = false;
+            generateBtn.textContent = 'Generate';
+            alert('Something went wrong. Please try again.');
+        });
+    });
+})();
+
+function copyResult() {
+    var content = document.getElementById('result-content').textContent;
+    navigator.clipboard.writeText(content).then(function() {
+        var btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+    });
+}
+</script>
+{% endblock %}

@@ -23,6 +23,10 @@ class TaskPlan(models.Model):
         max_length=10, choices=STATUS_CHOICES, default='ACTIVE',
     )
     phase = models.PositiveSmallIntegerField(default=1)
+    previous_plan = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='next_plans',
+    )
     duration_days = models.PositiveSmallIntegerField(default=30)
     starts_on = models.DateField()
     ends_on = models.DateField()
@@ -112,6 +116,53 @@ class Task(models.Model):
 
     def __str__(self):
         return f'Day {self.day_number}: {self.title} [{self.status}]'
+
+
+class Achievement(models.Model):
+    BADGE_CHOICES = [
+        ('FIRST_TASK', 'First Task Completed'),
+        ('FIRST_WEEK', 'First Week Complete'),
+        ('STREAK_3', '3-Day Streak'),
+        ('STREAK_7', '7-Day Streak'),
+        ('STREAK_14', '14-Day Streak'),
+        ('STREAK_30', '30-Day Streak'),
+        ('HALF_PLAN', 'Halfway Through Plan'),
+        ('PLAN_COMPLETE', 'Plan Completed'),
+        ('CATEGORY_MASTER', 'Category Master'),
+        ('SPEED_DEMON', 'Speed Demon'),
+        ('COMEBACK', 'Comeback Kid'),
+        ('MULTI_PLAN', 'Multi-Plan Veteran'),
+    ]
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='achievements',
+    )
+    badge = models.CharField(max_length=20, choices=BADGE_CHOICES)
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    earned_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ['-earned_at']
+
+    def __str__(self):
+        return f'{self.title} ({self.user.username})'
+
+
+class StreakRecord(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='streak_records',
+    )
+    date = models.DateField()
+    tasks_completed = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        unique_together = [('user', 'date')]
+        ordering = ['-date']
+
+    def __str__(self):
+        return f'{self.user.username} — {self.date} ({self.tasks_completed} tasks)'
 
 
 RESOURCE_TYPE_CHOICES = [

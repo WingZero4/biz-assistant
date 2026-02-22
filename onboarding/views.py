@@ -162,9 +162,14 @@ def wizard_step_6(request):
     stage = data.get('stage', 'IDEA')
     is_established = stage in ('GROWING', 'ESTABLISHED')
 
+    # Parse challenges for display
+    challenges_text = data.get('biggest_challenges', '')
+    challenges_list = [c.strip() for c in challenges_text.split('\n') if c.strip()]
+
     return render(request, 'onboarding/step_6.html', {
         'data': data,
         'goals_list': goals_list,
+        'challenges_list': challenges_list,
         'skills_display': skills_display,
         'platforms_display': platforms_display,
         'step': 6, 'total_steps': TOTAL_STEPS,

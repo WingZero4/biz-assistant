@@ -12,4 +12,5 @@ urlpatterns = [
     path('<int:pk>/reschedule/', views.reschedule_view, name='reschedule'),
     path('regenerate/', views.regenerate_plan_view, name='regenerate'),
     path('resource/<int:pk>/toggle/', views.toggle_resource_view, name='toggle_resource'),
+    path('continue/', views.continue_plan_view, name='continue_plan'),
 ]

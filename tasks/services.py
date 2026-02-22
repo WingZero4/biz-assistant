@@ -14,11 +14,14 @@ from ai.prompts import (
     DAILY_MESSAGE_USER,
     PLAN_ADJUSTMENT_SYSTEM,
     PLAN_ADJUSTMENT_USER,
+    PLAN_CONTINUATION_SYSTEM,
+    PLAN_CONTINUATION_USER,
     PLAN_GENERATION_SYSTEM,
     PLAN_GENERATION_USER,
 )
-from onboarding.models import BusinessProfile
+from onboarding.models import BusinessProfile, WeeklyPulse
 
+from .achievement_service import AchievementService
 from .models import ResourceTemplate, Task, TaskPlan, TaskResource
 
 logger = logging.getLogger(__name__)
@@ -363,12 +366,155 @@ class TaskGenerationService:
         lines.append('Reply DONE or SKIP when finished!')
         return '\n'.join(lines)
 
+    @staticmethod
+    @transaction.atomic
+    def generate_continuation_plan(
+        profile: BusinessProfile,
+        previous_plan: TaskPlan,
+        duration_days: int = 30,
+    ) -> TaskPlan:
+        """Generate a continuation plan based on previous plan results."""
+        today = timezone.now().date()
+        new_phase = previous_plan.phase + 1
+
+        # Compute previous plan stats
+        tasks = previous_plan.tasks.all()
+        total = tasks.count()
+        done = tasks.filter(status='DONE')
+        skipped = tasks.filter(status='SKIPPED')
+        done_count = done.count()
+        skipped_count = skipped.count()
+        completion_pct = round((done_count / total) * 100) if total > 0 else 0
+
+        # Category analysis
+        from collections import Counter
+        done_cats = Counter(done.values_list('category', flat=True))
+        skipped_cats = Counter(skipped.values_list('category', flat=True))
+        cat_labels = dict(Task.CATEGORY_CHOICES)
+
+        strong = [cat_labels.get(c, c) for c, _ in done_cats.most_common(3)]
+        weak = [cat_labels.get(c, c) for c, _ in skipped_cats.most_common(3)]
+
+        # Pulse summary
+        pulses = WeeklyPulse.objects.filter(
+            user=profile.user,
+        ).order_by('-week_of')[:4]
+        if pulses:
+            pulse_lines = []
+            for p in pulses:
+                pulse_lines.append(
+                    f'Week of {p.week_of}: Rev=${p.revenue_this_week or 0}, '
+                    f'{p.new_customers} new customers, '
+                    f'energy={p.get_energy_level_display()}, '
+                    f'win="{p.biggest_win}", blocker="{p.biggest_blocker}"'
+                )
+            pulse_summary = '\n'.join(pulse_lines)
+        else:
+            pulse_summary = 'No pulse data available yet.'
+
+        system_prompt = PLAN_CONTINUATION_SYSTEM.format(
+            phase_number=new_phase,
+            duration_days=duration_days,
+        )
+        user_prompt = PLAN_CONTINUATION_USER.format(
+            business_name=profile.business_name,
+            business_type=profile.business_type,
+            stage=profile.get_stage_display(),
+            goals=', '.join(profile.goals) if profile.goals else 'Not specified',
+            hours_per_day=profile.hours_per_day,
+            prev_phase=previous_plan.phase,
+            completed_count=done_count,
+            total_tasks=total,
+            completion_pct=completion_pct,
+            skipped_count=skipped_count,
+            strong_categories=', '.join(strong) or 'None',
+            weak_categories=', '.join(weak) or 'None',
+            completed_titles=', '.join(done.values_list('title', flat=True)[:10]) or 'None',
+            skipped_titles=', '.join(skipped.values_list('title', flat=True)[:10]) or 'None',
+            pulse_summary=pulse_summary,
+            phase_number=new_phase,
+            duration_days=duration_days,
+        )
+
+        try:
+            result = call_claude_json(system_prompt, user_prompt, max_tokens=12000)
+            tasks_data = result.get('tasks', [])
+        except ClaudeClientError:
+            logger.exception('Continuation plan generation failed, using fallback')
+            tasks_data = TaskGenerationService._fallback_tasks(profile, duration_days)
+
+        # Mark previous plan as completed
+        previous_plan.status = 'COMPLETED'
+        previous_plan.save(update_fields=['status'])
+
+        plan = TaskPlan.objects.create(
+            user=profile.user,
+            business_profile=profile,
+            title=f'Phase {new_phase} — {duration_days}-Day Plan',
+            status='ACTIVE',
+            phase=new_phase,
+            previous_plan=previous_plan,
+            starts_on=today,
+            ends_on=today + timedelta(days=duration_days),
+            ai_generation_metadata={
+                'model': settings.ANTHROPIC_MODEL,
+                'task_count': len(tasks_data),
+                'generated_at': timezone.now().isoformat(),
+                'continuation_of': previous_plan.pk,
+            },
+        )
+
+        for task_data in tasks_data:
+            day_num = task_data.get('day_number', 1)
+            task = Task.objects.create(
+                plan=plan,
+                title=task_data.get('title', 'Untitled task'),
+                description=task_data.get('description', ''),
+                category=task_data.get('category', 'PLANNING'),
+                difficulty=task_data.get('difficulty', 'MEDIUM'),
+                estimated_minutes=task_data.get('estimated_minutes', 30),
+                day_number=day_num,
+                due_date=today + timedelta(days=day_num - 1),
+                sort_order=task_data.get('sort_order', 0),
+            )
+            resources_data = task_data.get('resources', [])
+            TaskGenerationService._create_task_resources(task, resources_data, profile)
+
+        logger.info(
+            'Generated continuation plan %d (phase %d) with %d tasks for user %s',
+            plan.pk, new_phase, len(tasks_data), profile.user.username,
+        )
+        return plan
+
+    @staticmethod
+    def detect_plan_ready_for_continuation(user):
+        """Check if user's plan is ready for continuation.
+
+        Returns dict with reason and plan, or None.
+        """
+        active_plan = TaskPlan.objects.filter(user=user, status='ACTIVE').first()
+        if not active_plan:
+            return None
+
+        today = timezone.now().date()
+
+        # Plan expired (past end date)
+        if today > active_plan.ends_on:
+            return {'reason': 'expired', 'plan': active_plan}
+
+        # Plan completed (all tasks done or skipped — excludes RESCHEDULED)
+        pending = active_plan.tasks.exclude(status__in=['DONE', 'SKIPPED']).count()
+        if pending == 0 and active_plan.tasks.count() > 0:
+            return {'reason': 'completed', 'plan': active_plan}
+
+        return None
+
 
 class TaskProgressService:
 
     @staticmethod
     def mark_done(task: Task, user_response: str = '') -> Task:
-        """Mark task as completed."""
+        """Mark task as completed and check for achievements."""
         if task.status not in ('PENDING', 'SENT'):
             raise ValueError(
                 f'Cannot mark task as done from status {task.status}'
@@ -377,6 +523,13 @@ class TaskProgressService:
         task.completed_at = timezone.now()
         task.user_response = user_response
         task.save()
+
+        # Record achievement progress
+        try:
+            AchievementService.record_task_completion(task)
+        except Exception:
+            logger.exception('Achievement tracking failed for task %d', task.pk)
+
         return task
 
     @staticmethod

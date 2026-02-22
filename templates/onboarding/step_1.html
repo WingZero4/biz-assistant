@@ -1,2 +1,18 @@
 {% extends "onboarding/wizard_base.html" %}
 {% block wizard_title %}Tell us about your business{% endblock %}
+
+{% block wizard_content %}
+{{ block.super }}
+<script>
+(function() {
+    var typeSelect = document.getElementById('id_business_type');
+    var otherRow = document.getElementById('id_business_type_other').closest('.mb-3');
+
+    function toggleOther() {
+        otherRow.style.display = typeSelect.value === 'OTHER' ? '' : 'none';
+    }
+    typeSelect.addEventListener('change', toggleOther);
+    toggleOther();
+})();
+</script>
+{% endblock %}

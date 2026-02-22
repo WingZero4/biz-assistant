@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Analytics — BizAssistant{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Analytics</h2>
+
+<!-- Summary Stats -->
+<div class="row mb-4 g-3">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h3 class="text-success mb-0">{{ summary.tasks_completed }}</h3>
+                <small class="text-muted">Tasks Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h3 class="text-primary mb-0">{{ summary.hours_invested }}h</h3>
+                <small class="text-muted">Time Invested</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h3 class="{% if summary.current_streak >= 3 %}text-warning{% else %}text-muted{% endif %} mb-0">{{ summary.current_streak }}</h3>
+                <small class="text-muted">Day Streak</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h3 class="mb-0">{{ summary.avg_completion_rate }}%</h3>
+                <small class="text-muted">Completion Rate</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row mb-4 g-3">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Weekly Completion Trend</div>
+            <div class="card-body">
+                <canvas id="weeklyTrendChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Category Breakdown</div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row mb-4 g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Time Invested by Category</div>
+            <div class="card-body">
+                <canvas id="timeChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">30-Day Activity</div>
+            <div class="card-body">
+                <div id="streak-heatmap" class="d-flex flex-wrap gap-1"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pulse Trends -->
+<div class="row mb-4 g-3">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Revenue Trend</div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header fw-bold">Energy & Hours</div>
+            <div class="card-body">
+                <canvas id="energyChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Comparison -->
+{% if plan_comparison|length > 1 %}
+<div class="card mb-4">
+    <div class="card-header fw-bold">Plan Comparison</div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>Plan</th><th>Phase</th><th>Status</th><th>Completion</th></tr>
+                </thead>
+                <tbody>
+                    {% for plan in plan_comparison %}
+                    <tr>
+                        <td>{{ plan.title }}</td>
+                        <td>Phase {{ plan.phase }}</td>
+                        <td><span class="badge bg-{% if plan.status == 'ACTIVE' %}success{% elif plan.status == 'COMPLETED' %}primary{% else %}secondary{% endif %}">{{ plan.status }}</span></td>
+                        <td>
+                            <div class="progress" style="height:8px; min-width:100px;">
+                                <div class="progress-bar bg-success" style="width:{{ plan.completion_pct }}%"></div>
+                            </div>
+                            <small>{{ plan.completion_pct }}%</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var data = JSON.parse('{{ chart_data_json|escapejs }}');
+    var chartColors = {
+        primary: 'rgba(13, 110, 253, 0.8)',
+        success: 'rgba(25, 135, 84, 0.8)',
+        warning: 'rgba(255, 193, 7, 0.8)',
+        danger: 'rgba(220, 53, 69, 0.8)',
+        info: 'rgba(13, 202, 240, 0.8)',
+        purple: 'rgba(111, 66, 193, 0.8)',
+        orange: 'rgba(253, 126, 20, 0.8)',
+        teal: 'rgba(32, 201, 151, 0.8)',
+    };
+    var colorList = Object.values(chartColors);
+
+    // Weekly Completion Trend (line)
+    var trend = data.weekly_trend;
+    if (trend && trend.length) {
+        new Chart(document.getElementById('weeklyTrendChart'), {
+            type: 'line',
+            data: {
+                labels: trend.map(function(t) { return t.label; }),
+                datasets: [{
+                    label: 'Completed',
+                    data: trend.map(function(t) { return t.completed; }),
+                    borderColor: chartColors.success,
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }, {
+                    label: 'Total',
+                    data: trend.map(function(t) { return t.total; }),
+                    borderColor: chartColors.primary,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.3,
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' }}}
+        });
+    }
+
+    // Category Breakdown (doughnut)
+    var cats = data.category_breakdown;
+    if (cats && cats.length) {
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: cats.map(function(c) { return c.label; }),
+                datasets: [{
+                    data: cats.map(function(c) { return c.done; }),
+                    backgroundColor: colorList.slice(0, cats.length),
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 }}}}
+        });
+    }
+
+    // Time Invested (bar)
+    var timeData = data.time_invested;
+    if (timeData && timeData.by_category) {
+        var cats2 = Object.keys(timeData.by_category);
+        var vals = Object.values(timeData.by_category);
+        new Chart(document.getElementById('timeChart'), {
+            type: 'bar',
+            data: {
+                labels: cats2,
+                datasets: [{
+                    label: 'Minutes',
+                    data: vals,
+                    backgroundColor: colorList.slice(0, cats2.length),
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false }}}
+        });
+    }
+
+    // Streak Heatmap (CSS grid)
+    var heatmap = document.getElementById('streak-heatmap');
+    var streakData = data.streak_history;
+    if (heatmap && streakData) {
+        streakData.forEach(function(day) {
+            var cell = document.createElement('div');
+            cell.title = day.label + ': ' + day.tasks_completed + ' task(s)';
+            cell.style.width = '20px';
+            cell.style.height = '20px';
+            cell.style.borderRadius = '3px';
+            if (day.tasks_completed === 0) {
+                cell.style.backgroundColor = '#ebedf0';
+            } else if (day.tasks_completed === 1) {
+                cell.style.backgroundColor = '#9be9a8';
+            } else if (day.tasks_completed <= 3) {
+                cell.style.backgroundColor = '#40c463';
+            } else {
+                cell.style.backgroundColor = '#216e39';
+            }
+            heatmap.appendChild(cell);
+        });
+    }
+
+    // Revenue Trend (line)
+    var revenue = data.pulse_trends.revenue;
+    if (revenue && revenue.length) {
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: revenue.map(function(r) { return r.week; }),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: revenue.map(function(r) { return r.value; }),
+                    borderColor: chartColors.success,
+                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false }}}
+        });
+    }
+
+    // Energy & Hours (dual axis)
+    var energy = data.pulse_trends.energy;
+    var hours = data.pulse_trends.hours;
+    if (energy && energy.length) {
+        new Chart(document.getElementById('energyChart'), {
+            type: 'bar',
+            data: {
+                labels: energy.map(function(e) { return e.week; }),
+                datasets: [{
+                    label: 'Hours Worked',
+                    data: hours.map(function(h) { return h.value; }),
+                    backgroundColor: chartColors.primary,
+                    order: 2,
+                }, {
+                    label: 'Energy (1-5)',
+                    data: energy.map(function(e) { return e.value; }),
+                    type: 'line',
+                    borderColor: chartColors.warning,
+                    backgroundColor: 'transparent',
+                    tension: 0.3,
+                    yAxisID: 'y1',
+                    order: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' }},
+                scales: {
+                    y: { beginAtZero: true },
+                    y1: { position: 'right', min: 1, max: 5, grid: { drawOnChartArea: false }}
+                }
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

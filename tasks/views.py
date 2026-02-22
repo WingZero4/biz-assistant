@@ -2,9 +2,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Task, TaskPlan, TaskResource
-from .services import TaskProgressService
+from .services import TaskGenerationService, TaskProgressService
 
 
 @login_required
@@ -56,7 +57,10 @@ def mark_done_view(request, pk):
     except ValueError as e:
         messages.error(request, str(e))
 
-    return redirect(request.POST.get('next', 'accounts:dashboard'))
+    next_url = request.POST.get('next', '')
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect('accounts:dashboard')
 
 
 @login_required
@@ -71,7 +75,10 @@ def mark_skip_view(request, pk):
     except ValueError as e:
         messages.error(request, str(e))
 
-    return redirect(request.POST.get('next', 'accounts:dashboard'))
+    next_url = request.POST.get('next', '')
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        return redirect(next_url)
+    return redirect('accounts:dashboard')
 
 
 @login_required
@@ -145,3 +152,31 @@ def toggle_resource_view(request, pk):
     resource.is_completed = not resource.is_completed
     resource.save(update_fields=['is_completed'])
     return redirect('tasks:detail', pk=resource.task.pk)
+
+
+@login_required
+def continue_plan_view(request):
+    """Generate continuation plan (next phase)."""
+    if request.method != 'POST':
+        return redirect('accounts:dashboard')
+
+    from onboarding.models import BusinessProfile
+    try:
+        profile = request.user.business_profile
+    except BusinessProfile.DoesNotExist:
+        messages.error(request, 'Complete onboarding first.')
+        return redirect('onboarding:step_1')
+
+    continuation = TaskGenerationService.detect_plan_ready_for_continuation(request.user)
+    if not continuation:
+        messages.info(request, 'Your current plan is still in progress.')
+        return redirect('accounts:dashboard')
+
+    plan = TaskGenerationService.generate_continuation_plan(
+        profile, continuation['plan'],
+    )
+    messages.success(
+        request,
+        f'Phase {plan.phase} generated with {plan.tasks.count()} tasks!',
+    )
+    return redirect('accounts:dashboard')
