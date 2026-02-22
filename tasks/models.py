@@ -102,6 +102,14 @@ class Task(models.Model):
     class Meta:
         ordering = ['due_date', 'sort_order']
 
+    @property
+    def is_overdue(self):
+        from django.utils import timezone
+        return (
+            self.status in ('PENDING', 'SENT')
+            and self.due_date < timezone.now().date()
+        )
+
     def __str__(self):
         return f'Day {self.day_number}: {self.title} [{self.status}]'
 

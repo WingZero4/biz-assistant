@@ -3,11 +3,28 @@ from django.contrib import admin
 from .models import ResourceTemplate, Task, TaskPlan, TaskResource
 
 
+class TaskInline(admin.TabularInline):
+    model = Task
+    extra = 0
+    fields = ['day_number', 'title', 'category', 'status', 'due_date']
+    readonly_fields = ['day_number', 'title', 'category', 'status', 'due_date']
+    show_change_link = True
+    can_delete = False
+
+
 @admin.register(TaskPlan)
 class TaskPlanAdmin(admin.ModelAdmin):
-    list_display = ['title', 'user', 'status', 'phase', 'starts_on', 'ends_on', 'completion_pct']
+    list_display = [
+        'title', 'user', 'status', 'phase',
+        'starts_on', 'ends_on', 'task_count', 'completion_pct',
+    ]
     list_filter = ['status']
     search_fields = ['user__username', 'title']
+    inlines = [TaskInline]
+
+    def task_count(self, obj):
+        return obj.tasks.count()
+    task_count.short_description = 'Tasks'
 
 
 class TaskResourceInline(admin.TabularInline):
@@ -19,11 +36,22 @@ class TaskResourceInline(admin.TabularInline):
 
 @admin.register(Task)
 class TaskAdmin(admin.ModelAdmin):
-    list_display = ['title', 'plan', 'category', 'difficulty', 'day_number', 'due_date', 'status']
+    list_display = [
+        'title', 'plan_user', 'category', 'difficulty',
+        'day_number', 'due_date', 'status', 'resource_count',
+    ]
     list_filter = ['status', 'category', 'difficulty']
-    search_fields = ['title', 'description']
+    search_fields = ['title', 'description', 'plan__user__username']
     date_hierarchy = 'due_date'
     inlines = [TaskResourceInline]
+
+    def plan_user(self, obj):
+        return obj.plan.user.username
+    plan_user.short_description = 'User'
+
+    def resource_count(self, obj):
+        return obj.resources.count()
+    resource_count.short_description = 'Resources'
 
 
 @admin.action(description='Approve selected templates (mark as Reviewed)')
