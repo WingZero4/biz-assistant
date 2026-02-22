@@ -7,7 +7,7 @@
     <div>
         <a href="{% url 'accounts:assessment' %}" class="btn btn-outline-primary btn-sm">View Assessment</a>
         <form method="post" action="{% url 'tasks:regenerate' %}" class="d-inline ms-1"
-              onsubmit="return confirm('This will replace your current plan with a new AI-generated one. Continue?');">
+              onsubmit="return confirm('This will replace your current plan with a freshly generated one. Continue?');">
             {% csrf_token %}
             <button type="submit" class="btn btn-outline-secondary btn-sm">Regenerate Plan</button>
         </form>

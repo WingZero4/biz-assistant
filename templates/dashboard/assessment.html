@@ -133,8 +133,7 @@
 <!-- Metadata -->
 {% if profile.assessment_generated_at %}
 <p class="text-muted text-end">
-    <small>Assessment generated {{ profile.assessment_generated_at|date:"N j, Y g:i A" }}
-    {% if profile.ai_model_used %} using {{ profile.ai_model_used }}{% endif %}</small>
+    <small>Assessment generated {{ profile.assessment_generated_at|date:"N j, Y g:i A" }}</small>
 </p>
 {% endif %}
 {% endblock %}

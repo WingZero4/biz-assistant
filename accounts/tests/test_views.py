@@ -14,7 +14,7 @@ class LandingViewTest(TestCase):
     def test_landing_page_renders(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Launch Your Business')
+        self.assertContains(response, 'Personal Business Coach')
 
     def test_landing_redirects_authenticated_user(self):
         user = User.objects.create_user('testuser', 'test@example.com', 'pass123')
