@@ -9,6 +9,12 @@ from tasks.models import Task, TaskPlan
 from .forms import ProfileForm, SignupForm
 
 
+def landing_view(request):
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
+    return render(request, 'landing.html')
+
+
 def signup_view(request):
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
@@ -38,6 +44,7 @@ def dashboard_view(request):
     today_tasks = []
     recent_completed = []
     upcoming_tasks = []
+    stats = {}
 
     if active_plan:
         today_tasks = active_plan.tasks.filter(due_date=today).exclude(
@@ -50,12 +57,41 @@ def dashboard_view(request):
             due_date__gt=today, status='PENDING',
         )[:10]
 
+        total = active_plan.tasks.count()
+        done = active_plan.tasks.filter(status='DONE').count()
+        skipped = active_plan.tasks.filter(status='SKIPPED').count()
+        overdue = active_plan.tasks.filter(
+            due_date__lt=today, status__in=['PENDING', 'SENT'],
+        ).count()
+        stats = {
+            'total': total,
+            'done': done,
+            'skipped': skipped,
+            'remaining': total - done - skipped,
+            'overdue': overdue,
+        }
+
     return render(request, 'dashboard/home.html', {
         'plan': active_plan,
         'today_tasks': today_tasks,
         'recent_completed': recent_completed,
         'upcoming_tasks': upcoming_tasks,
         'today': today,
+        'stats': stats,
+    })
+
+
+@login_required
+def assessment_view(request):
+    if not request.user.profile.is_onboarded:
+        return redirect('onboarding:step_1')
+
+    profile = request.user.business_profile
+    assessment = profile.ai_assessment or {}
+
+    return render(request, 'dashboard/assessment.html', {
+        'profile': profile,
+        'assessment': assessment,
     })
 
 

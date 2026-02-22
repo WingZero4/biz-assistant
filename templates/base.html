@@ -10,18 +10,44 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">BizAssistant</a>
             {% if user.is_authenticated %}
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{% url 'accounts:dashboard' %}">Dashboard</a>
-                <a class="nav-link" href="{% url 'tasks:list' %}">Tasks</a>
-                <a class="nav-link" href="{% url 'accounts:profile' %}">Profile</a>
-                <form method="post" action="{% url 'logout' %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="nav-link btn btn-link">Logout</button>
-                </form>
-            </div>
+            <a class="navbar-brand" href="{% url 'accounts:dashboard' %}">BizAssistant</a>
+            {% else %}
+            <a class="navbar-brand" href="{% url 'accounts:landing' %}">BizAssistant</a>
             {% endif %}
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if user.is_authenticated %}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if nav_active == 'dashboard' %}active{% endif %}" href="{% url 'accounts:dashboard' %}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if nav_active == 'tasks' %}active{% endif %}" href="{% url 'tasks:list' %}">Tasks</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if nav_active == 'profile' %}active{% endif %}" href="{% url 'accounts:profile' %}">Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <form method="post" action="{% url 'logout' %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link btn btn-link">Logout</button>
+                        </form>
+                    </li>
+                </ul>
+                {% else %}
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}">Log In</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'accounts:signup' %}">Sign Up</a>
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
         </div>
     </nav>
 

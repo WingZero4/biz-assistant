@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}BizAssistant — AI-Powered Business Launch Plans{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="text-center py-5">
+    <h1 class="display-4 fw-bold mb-3">Launch Your Business in 30 Days</h1>
+    <p class="lead text-muted col-md-8 mx-auto mb-4">
+        Answer a few questions about your business idea and our AI builds a personalized
+        day-by-day action plan with templates, checklists, and guides to get you started.
+    </p>
+    <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg px-5 me-2">Get Started Free</a>
+    <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-lg px-4">Log In</a>
+</div>
+
+<hr class="my-5">
+
+<!-- How it works -->
+<h2 class="text-center mb-4">How It Works</h2>
+<div class="row text-center g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <div class="display-6 text-primary mb-3">1</div>
+                <h5>Tell Us About Your Business</h5>
+                <p class="text-muted">Complete a quick 6-step onboarding: your idea, goals, skills, industry, and digital presence.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <div class="display-6 text-primary mb-3">2</div>
+                <h5>AI Builds Your Plan</h5>
+                <p class="text-muted">Claude AI assesses your strengths and risks, then generates a tailored 30-day launch plan with actionable tasks.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <div class="display-6 text-primary mb-3">3</div>
+                <h5>Execute Day by Day</h5>
+                <p class="text-muted">Get daily tasks with templates, checklists, and links. Mark them done or skip &mdash; the plan adapts to you.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5>Personalized Assessment</h5>
+                <p class="text-muted mb-0">Get an honest viability score, key strengths, risks, and recommended focus areas based on your specific situation.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5>Actionable Resources</h5>
+                <p class="text-muted mb-0">Every task comes with templates to copy, checklists to follow, guides to read, and links to the tools you need.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5>Daily Reminders</h5>
+                <p class="text-muted mb-0">Receive your tasks via SMS or email each morning at a time you choose. Reply DONE to track progress.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5>Covers Everything</h5>
+                <p class="text-muted mb-0">Legal, branding, marketing, finance, operations &mdash; your plan covers all the categories relevant to your business.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CTA -->
+<div class="text-center py-4">
+    <h3 class="mb-3">Ready to start building?</h3>
+    <a href="{% url 'accounts:signup' %}" class="btn btn-primary btn-lg px-5">Create Your Free Account</a>
+</div>
+{% endblock %}

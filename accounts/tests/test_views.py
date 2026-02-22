@@ -2,6 +2,21 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 
+class LandingViewTest(TestCase):
+
+    def test_landing_page_renders(self):
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Launch Your Business')
+
+    def test_landing_redirects_authenticated_user(self):
+        user = User.objects.create_user('testuser', 'test@example.com', 'pass123')
+        self.client.force_login(user)
+        response = self.client.get('/')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/dashboard/')
+
+
 class SignupViewTest(TestCase):
 
     def test_signup_page_renders(self):

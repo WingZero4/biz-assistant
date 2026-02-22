@@ -2,7 +2,10 @@
 {% block title %}Dashboard — BizAssistant{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Dashboard</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Dashboard</h2>
+    <a href="{% url 'accounts:assessment' %}" class="btn btn-outline-primary btn-sm">View Assessment</a>
+</div>
 
 {% if plan %}
 <!-- Progress -->
@@ -18,6 +21,44 @@
         <small class="text-muted">{{ plan.starts_on }} — {{ plan.ends_on }}</small>
     </div>
 </div>
+
+<!-- Stats -->
+{% if stats %}
+<div class="row mb-4 g-3">
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h4 class="text-success mb-0">{{ stats.done }}</h4>
+                <small class="text-muted">Completed</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h4 class="mb-0">{{ stats.remaining }}</h4>
+                <small class="text-muted">Remaining</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h4 class="text-warning mb-0">{{ stats.skipped }}</h4>
+                <small class="text-muted">Skipped</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body py-3">
+                <h4 class="{% if stats.overdue %}text-danger{% else %}text-muted{% endif %} mb-0">{{ stats.overdue }}</h4>
+                <small class="text-muted">Overdue</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <!-- Today's Tasks -->
 <h4 class="mb-3">Today's Tasks ({{ today }})</h4>

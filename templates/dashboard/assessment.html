@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Business Assessment — BizAssistant{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Business Assessment</h2>
+    <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+</div>
+
+<!-- Business Profile Summary -->
+<div class="card mb-4">
+    <div class="card-header fw-bold">{{ profile.business_name }}</div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Type:</strong> {{ profile.business_type }}</p>
+                <p><strong>Stage:</strong> {{ profile.get_stage_display }}</p>
+                <p><strong>Model:</strong> {{ profile.get_business_model_display }}</p>
+                {% if profile.niche %}<p><strong>Niche:</strong> {{ profile.niche }}</p>{% endif %}
+            </div>
+            <div class="col-md-6">
+                <p><strong>Budget:</strong> {{ profile.get_budget_range_display }}</p>
+                <p><strong>Experience:</strong> {{ profile.get_business_experience_display }}</p>
+                <p><strong>Hours/day:</strong> {{ profile.hours_per_day }}</p>
+                {% if profile.location %}<p><strong>Location:</strong> {{ profile.location }}</p>{% endif %}
+            </div>
+        </div>
+        {% if profile.description %}
+        <p class="mb-0"><strong>Description:</strong> {{ profile.description }}</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if assessment.summary %}
+<div class="card mb-4">
+    <div class="card-body">
+        <p class="mb-0 fs-5">{{ assessment.summary }}</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Scores -->
+{% if assessment.viability_score %}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3 class="{% if assessment.viability_score >= 7 %}text-success{% elif assessment.viability_score >= 4 %}text-warning{% else %}text-danger{% endif %}">
+                    {{ assessment.viability_score }}/10
+                </h3>
+                <small class="text-muted">Viability Score</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3>{{ assessment.time_to_revenue|default:"TBD" }}</h3>
+                <small class="text-muted">Est. Time to Revenue</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <h3>{{ assessment.plan_type|default:"30-day" }}</h3>
+                <small class="text-muted">Plan Type</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Strengths & Risks -->
+<div class="row mb-4">
+    {% if assessment.key_strengths %}
+    <div class="col-md-6 mb-3">
+        <div class="card h-100 border-success">
+            <div class="card-header bg-success text-white">Key Strengths</div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    {% for strength in assessment.key_strengths %}
+                    <li>{{ strength }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if assessment.key_risks %}
+    <div class="col-md-6 mb-3">
+        <div class="card h-100 border-warning">
+            <div class="card-header bg-warning text-dark">Key Risks</div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    {% for risk in assessment.key_risks %}
+                    <li>{{ risk }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Focus Areas -->
+{% if assessment.focus_areas %}
+<div class="card mb-4">
+    <div class="card-header">Focus Areas</div>
+    <div class="card-body">
+        {% for area in assessment.focus_areas %}
+        <span class="badge bg-primary me-2 mb-1 fs-6">{{ area }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- First Steps -->
+{% if assessment.first_steps %}
+<div class="card mb-4">
+    <div class="card-header">Recommended First Steps</div>
+    <div class="card-body">
+        <ol class="mb-0">
+            {% for step in assessment.first_steps %}
+            <li class="mb-1">{{ step }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+</div>
+{% endif %}
+
+<!-- Metadata -->
+{% if profile.assessment_generated_at %}
+<p class="text-muted text-end">
+    <small>Assessment generated {{ profile.assessment_generated_at|date:"N j, Y g:i A" }}
+    {% if profile.ai_model_used %} using {{ profile.ai_model_used }}{% endif %}</small>
+</p>
+{% endif %}
+{% endblock %}
