@@ -70,7 +70,7 @@ class TaskGenerationService:
         )
 
         try:
-            result = call_claude_json(system_prompt, user_prompt, max_tokens=8192)
+            result = call_claude_json(system_prompt, user_prompt, max_tokens=16384)
             tasks_data = result.get('tasks', [])
         except ClaudeClientError:
             logger.exception('Plan generation failed, using fallback')
