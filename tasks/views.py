@@ -75,6 +75,65 @@ def mark_skip_view(request, pk):
 
 
 @login_required
+def reschedule_view(request, pk):
+    """Reschedule a task to a future date."""
+    if request.method != 'POST':
+        return redirect('tasks:detail', pk=pk)
+
+    task = get_object_or_404(Task, pk=pk, plan__user=request.user)
+    new_date = request.POST.get('new_date')
+    if not new_date:
+        messages.error(request, 'Please select a date.')
+        return redirect('tasks:detail', pk=pk)
+
+    from datetime import date as date_type
+    try:
+        parsed = date_type.fromisoformat(new_date)
+    except ValueError:
+        messages.error(request, 'Invalid date format.')
+        return redirect('tasks:detail', pk=pk)
+
+    from django.utils import timezone
+    if parsed <= timezone.now().date():
+        messages.error(request, 'Reschedule date must be in the future.')
+        return redirect('tasks:detail', pk=pk)
+
+    try:
+        TaskProgressService.reschedule_task(task, parsed)
+        messages.success(request, f'"{task.title}" rescheduled to {parsed}.')
+    except ValueError as e:
+        messages.error(request, str(e))
+
+    return redirect('accounts:dashboard')
+
+
+@login_required
+def regenerate_plan_view(request):
+    """Regenerate the user's task plan."""
+    if request.method != 'POST':
+        return redirect('accounts:dashboard')
+
+    from onboarding.models import BusinessProfile
+    try:
+        profile = request.user.business_profile
+    except BusinessProfile.DoesNotExist:
+        messages.error(request, 'Complete onboarding first.')
+        return redirect('onboarding:step_1')
+
+    from .services import TaskGenerationService
+
+    # Pause current active plan
+    current = TaskPlan.objects.filter(user=request.user, status='ACTIVE').first()
+    if current:
+        current.status = 'REPLACED'
+        current.save(update_fields=['status'])
+
+    plan = TaskGenerationService.generate_plan(profile)
+    messages.success(request, f'New plan generated with {plan.tasks.count()} tasks!')
+    return redirect('accounts:dashboard')
+
+
+@login_required
 def toggle_resource_view(request, pk):
     """Toggle a checklist resource item's completion status."""
     if request.method != 'POST':

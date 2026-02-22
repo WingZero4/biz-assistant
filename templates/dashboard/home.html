@@ -4,7 +4,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">Dashboard</h2>
-    <a href="{% url 'accounts:assessment' %}" class="btn btn-outline-primary btn-sm">View Assessment</a>
+    <div>
+        <a href="{% url 'accounts:assessment' %}" class="btn btn-outline-primary btn-sm">View Assessment</a>
+        <form method="post" action="{% url 'tasks:regenerate' %}" class="d-inline ms-1"
+              onsubmit="return confirm('This will replace your current plan with a new AI-generated one. Continue?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm">Regenerate Plan</button>
+        </form>
+    </div>
 </div>
 
 {% if plan %}

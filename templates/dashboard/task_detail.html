@@ -21,6 +21,8 @@
             <span class="badge bg-success">Completed</span>
             {% elif task.status == 'SKIPPED' %}
             <span class="badge bg-warning">Skipped</span>
+            {% elif task.status == 'RESCHEDULED' %}
+            <span class="badge bg-secondary">Rescheduled{% if task.rescheduled_to %} to {{ task.rescheduled_to }}{% endif %}</span>
             {% endif %}
         </div>
 
@@ -35,15 +37,29 @@
         {% endif %}
 
         {% if task.status == 'PENDING' or task.status == 'SENT' %}
-        <div class="mt-3">
-            <form method="post" action="{% url 'tasks:mark_done' task.pk %}" class="d-inline">
+        <div class="mt-3 d-flex gap-2 flex-wrap">
+            <form method="post" action="{% url 'tasks:mark_done' task.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-success">Mark Done</button>
             </form>
-            <form method="post" action="{% url 'tasks:mark_skip' task.pk %}" class="d-inline">
+            <form method="post" action="{% url 'tasks:mark_skip' task.pk %}">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-outline-warning">Skip</button>
             </form>
+            <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#rescheduleForm">
+                Reschedule
+            </button>
+        </div>
+
+        <div class="collapse mt-3" id="rescheduleForm">
+            <div class="card card-body" style="max-width: 350px;">
+                <form method="post" action="{% url 'tasks:reschedule' task.pk %}">
+                    {% csrf_token %}
+                    <label for="new_date" class="form-label">New date:</label>
+                    <input type="date" name="new_date" id="new_date" class="form-control mb-2" required>
+                    <button type="submit" class="btn btn-primary btn-sm">Confirm Reschedule</button>
+                </form>
+            </div>
         </div>
         {% endif %}
     </div>
