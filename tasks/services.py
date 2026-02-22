@@ -79,10 +79,20 @@ class TaskGenerationService:
             logger.exception('Plan generation failed, using fallback')
             tasks_data = TaskGenerationService._fallback_tasks(profile, duration_days)
 
+        # Stage-appropriate plan title
+        stage_titles = {
+            'IDEA': f'{duration_days}-Day Launch Plan',
+            'PLANNING': f'{duration_days}-Day Launch Plan',
+            'EARLY': f'{duration_days}-Day Growth Plan',
+            'GROWING': f'{duration_days}-Day Scaling Plan',
+            'ESTABLISHED': f'{duration_days}-Day Optimization Plan',
+        }
+        plan_title = stage_titles.get(profile.stage, f'{duration_days}-Day Action Plan')
+
         plan = TaskPlan.objects.create(
             user=profile.user,
             business_profile=profile,
-            title=f'{duration_days}-Day Launch Plan',
+            title=plan_title,
             starts_on=today,
             ends_on=today + timedelta(days=duration_days),
             ai_generation_metadata={

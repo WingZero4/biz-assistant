@@ -71,13 +71,16 @@ def wizard_step_3(request):
     if not _has_basics(request):
         return redirect('onboarding:step_1')
 
+    data = _get_wizard_data(request)
+    stage = data.get('stage', 'IDEA')
+
     if request.method == 'POST':
-        form = SkillsExperienceForm(request.POST)
+        form = SkillsExperienceForm(request.POST, stage=stage)
         if form.is_valid():
             _save_wizard_data(request, form.cleaned_data)
             return redirect('onboarding:step_4')
     else:
-        form = SkillsExperienceForm(initial=_get_wizard_data(request))
+        form = SkillsExperienceForm(initial=data, stage=stage)
 
     return render(request, 'onboarding/step_3.html', {
         'form': form, 'step': 3, 'total_steps': TOTAL_STEPS,
@@ -90,13 +93,16 @@ def wizard_step_4(request):
     if not _has_basics(request):
         return redirect('onboarding:step_1')
 
+    data = _get_wizard_data(request)
+    stage = data.get('stage', 'IDEA')
+
     if request.method == 'POST':
-        form = IndustryDetailsForm(request.POST)
+        form = IndustryDetailsForm(request.POST, stage=stage)
         if form.is_valid():
             _save_wizard_data(request, form.cleaned_data)
             return redirect('onboarding:step_5')
     else:
-        form = IndustryDetailsForm(initial=_get_wizard_data(request))
+        form = IndustryDetailsForm(initial=data, stage=stage)
 
     return render(request, 'onboarding/step_4.html', {
         'form': form, 'step': 4, 'total_steps': TOTAL_STEPS,
@@ -109,13 +115,16 @@ def wizard_step_5(request):
     if not _has_basics(request):
         return redirect('onboarding:step_1')
 
+    data = _get_wizard_data(request)
+    stage = data.get('stage', 'IDEA')
+
     if request.method == 'POST':
-        form = DigitalPresenceForm(request.POST)
+        form = DigitalPresenceForm(request.POST, stage=stage)
         if form.is_valid():
             _save_wizard_data(request, form.cleaned_data)
             return redirect('onboarding:step_6')
     else:
-        form = DigitalPresenceForm(initial=_get_wizard_data(request))
+        form = DigitalPresenceForm(initial=data, stage=stage)
 
     return render(request, 'onboarding/step_5.html', {
         'form': form, 'step': 5, 'total_steps': TOTAL_STEPS,
@@ -150,6 +159,9 @@ def wizard_step_6(request):
     skills_display = [skill_map.get(s, s) for s in data.get('owner_skills', [])]
     platforms_display = [platform_map.get(p, p) for p in data.get('social_platforms', [])]
 
+    stage = data.get('stage', 'IDEA')
+    is_established = stage in ('GROWING', 'ESTABLISHED')
+
     return render(request, 'onboarding/step_6.html', {
         'data': data,
         'goals_list': goals_list,
@@ -157,6 +169,7 @@ def wizard_step_6(request):
         'platforms_display': platforms_display,
         'step': 6, 'total_steps': TOTAL_STEPS,
         'step_title': 'Review & Launch',
+        'is_established': is_established,
     })
 
 
@@ -164,7 +177,9 @@ def wizard_step_6(request):
 def onboarding_complete(request):
     profile = getattr(request.user, 'business_profile', None)
     assessment = profile.ai_assessment if profile else {}
+    is_established = profile.stage in ('GROWING', 'ESTABLISHED') if profile else False
     return render(request, 'onboarding/complete.html', {
         'profile': profile,
         'assessment': assessment,
+        'is_established': is_established,
     })

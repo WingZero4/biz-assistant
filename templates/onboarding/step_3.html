@@ -1,3 +1,3 @@
 {% extends "onboarding/wizard_base.html" %}
-{% block wizard_title %}Your Skills & Experience{% endblock %}
+{% block wizard_title %}{{ form.stage_title }}{% endblock %}
 {% block back_url %}{% url 'onboarding:step_2' %}{% endblock %}

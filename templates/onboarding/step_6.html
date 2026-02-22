@@ -1,8 +1,8 @@
 {% extends "onboarding/wizard_base.html" %}
 {% load form_tags %}
-{% block wizard_title %}Review & Launch Your Plan{% endblock %}
+{% block wizard_title %}{% if is_established %}Review & Build Your Plan{% else %}Review & Launch Your Plan{% endif %}{% endblock %}
 {% block back_url %}{% url 'onboarding:step_5' %}{% endblock %}
-{% block submit_text %}Generate My Plan{% endblock %}
+{% block submit_text %}{% if is_established %}Generate My Plan{% else %}Generate My Plan{% endif %}{% endblock %}
 
 {% block wizard_content %}
 <div class="card mb-3">
@@ -70,7 +70,7 @@
 </div>
 
 <div class="alert alert-info">
-    Clicking "Generate My Plan" will create a personalized 30-day action plan with templates, checklists, and guides tailored to your business. This may take a moment.
+    Clicking "Generate My Plan" will create a personalized 30-day action plan with templates, checklists, and guides tailored to your business{% if is_established %} and goals{% endif %}. This may take a moment.
 </div>
 
 <!-- Loading overlay (hidden by default) -->
@@ -79,7 +79,7 @@
         <span class="visually-hidden">Loading...</span>
     </div>
     <h5>Generating your personalized plan...</h5>
-    <p class="text-muted">Analyzing your business profile and creating tasks with resources. This usually takes 15-30 seconds.</p>
+    <p class="text-muted">Analyzing your business profile and creating tasks with resources tailored to your stage. This usually takes 15-30 seconds.</p>
 </div>
 
 <script>

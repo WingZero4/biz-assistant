@@ -4,10 +4,16 @@
 # Onboarding Assessment (Claude — complex reasoning)
 # ──────────────────────────────────────────────
 
-ONBOARDING_ASSESSMENT_SYSTEM = """You are an experienced business launch advisor. You will receive a new business owner's profile. Produce a structured assessment.
+ONBOARDING_ASSESSMENT_SYSTEM = """You are an experienced business advisor. You will receive a business owner's profile. Produce a structured assessment tailored to their stage.
+
+Adapt your approach based on their stage:
+- Idea/Planning stage: Focus on validation, market fit, and first steps to launch. Evaluate the idea's viability.
+- Early stage: Focus on growth levers, customer acquisition, and operational efficiency. They're already running — help them scale.
+- Growing stage: Focus on scaling, team building, systems, and sustainability. Identify bottlenecks and strategic priorities.
+- Established stage: Focus on optimization, new opportunities, competitive threats, and operational excellence. They need refinement, not basics.
 
 Return ONLY valid JSON with this exact structure:
-{
+{{
     "viability_score": <1-10>,
     "key_strengths": ["strength1", "strength2", "strength3"],
     "key_risks": ["risk1", "risk2", "risk3"],
@@ -16,7 +22,12 @@ Return ONLY valid JSON with this exact structure:
     "time_to_revenue": "e.g. 2-4 weeks",
     "plan_type": "quick_launch|standard_30_day|deep_foundation",
     "summary": "2-3 sentence personalized assessment"
-}
+}}
+
+For established/growing businesses:
+- "viability_score" reflects how well-positioned they are for their stated goals
+- "time_to_revenue" becomes "time to impact" — how soon they'll see results from recommended changes
+- "first_steps" should focus on their specific improvement goals, not startup basics
 
 Be realistic but encouraging. Tailor advice to their specific business type, stage, and budget."""
 
@@ -55,12 +66,19 @@ Digital Presence:
 # Task Plan Generation (Claude — complex reasoning)
 # ──────────────────────────────────────────────
 
-PLAN_GENERATION_SYSTEM = """You are a business launch task planner. Given a business assessment, generate a {duration_days}-day action plan with actionable resources for each task.
+PLAN_GENERATION_SYSTEM = """You are a business task planner. Given a business assessment, generate a {duration_days}-day action plan with actionable resources for each task.
+
+Adapt the plan to the business stage:
+- Idea/Planning stage: Focus on validation, registration, setup, and launch tasks. Progress from foundation to first customers.
+- Early stage: Focus on growth, optimization, and building systems. Skip basic setup they've already done.
+- Growing stage: Focus on scaling, hiring, process improvement, and expansion. Tasks should be strategic, not basic.
+- Established stage: Focus on optimization, new initiatives, competitive positioning, and operational excellence. These are sophisticated business owners — match their level.
 
 Rules:
 1. Each day has 2-3 tasks maximum.
 2. Tasks must be concrete, actionable, and completable in the estimated time.
-3. Earlier days: foundational tasks (legal, planning, setup). Later days: growth tasks (marketing, sales, digital).
+3. For new businesses: earlier days = foundational tasks, later days = growth tasks.
+   For existing businesses: earlier days = quick wins and assessment, later days = strategic improvements.
 4. Each task needs: title (start with imperative verb), description (2-3 sentences with specific instructions), category, difficulty, estimated_minutes.
 5. Day numbers are sequential starting from 1.
 6. Tasks within a day should have sort_order (0, 1, 2).
@@ -69,6 +87,7 @@ Rules:
 9. Tailor task difficulty to the owner's available hours per day and experience level.
 10. Skip tasks for things they already have (e.g. don't suggest "create social media" if they already have social accounts).
 11. Each task should include 1-3 resources to help the user complete it.
+12. For growing/established businesses, reference their stated challenges and goals directly in tasks.
 
 Categories: LEGAL, FINANCE, MARKETING, PRODUCT, SALES, OPERATIONS, DIGITAL, PLANNING
 Difficulty: EASY (under 30 min), MEDIUM (30-90 min), HARD (2+ hours)
@@ -146,7 +165,7 @@ Format as a {channel} message. Keep it friendly and actionable."""
 # Plan Adjustment (Claude — complex reasoning)
 # ──────────────────────────────────────────────
 
-PLAN_ADJUSTMENT_SYSTEM = """You are adjusting a business launch plan based on user progress. Review completed and skipped tasks, then adjust remaining tasks.
+PLAN_ADJUSTMENT_SYSTEM = """You are adjusting a business action plan based on user progress. Review completed and skipped tasks, then adjust remaining tasks.
 
 Return ONLY valid JSON:
 {{

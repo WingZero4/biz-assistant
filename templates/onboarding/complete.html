@@ -33,7 +33,7 @@
                 <div class="card text-center h-100">
                     <div class="card-body">
                         <h3>{{ assessment.time_to_revenue|default:"TBD" }}</h3>
-                        <small class="text-muted">Est. Time to Revenue</small>
+                        <small class="text-muted">{% if is_established %}Est. Time to Impact{% else %}Est. Time to Revenue{% endif %}</small>
                     </div>
                 </div>
             </div>

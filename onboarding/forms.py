@@ -162,8 +162,52 @@ class BusinessGoalsForm(forms.Form):
         self.stage_title = config['title']
 
 
+STEP3_STAGE_CONFIG = {
+    'IDEA': {
+        'title': 'Your Skills & Experience',
+        'skills_label': 'What skills do you have?',
+        'experience_label': 'Business experience level',
+        'hours_label': 'Hours you can dedicate per day',
+        'hours_help': 'How many hours daily can you spend building this business?',
+        'education_placeholder': 'e.g. MBA, Self-taught, Marketing degree',
+    },
+    'PLANNING': {
+        'title': 'Your Skills & Experience',
+        'skills_label': 'What skills do you bring?',
+        'experience_label': 'Business experience level',
+        'hours_label': 'Hours you can dedicate per day',
+        'hours_help': 'How many hours daily can you spend on launch tasks?',
+        'education_placeholder': 'e.g. MBA, Self-taught, Marketing degree',
+    },
+    'EARLY': {
+        'title': 'Your Skills & Experience',
+        'skills_label': 'What skills do you use in your business?',
+        'experience_label': 'Your business experience',
+        'hours_label': 'Hours you can dedicate to growth per day',
+        'hours_help': 'Beyond day-to-day operations, how many hours can you spend on growth?',
+        'education_placeholder': 'e.g. MBA, Industry certification, Self-taught',
+    },
+    'GROWING': {
+        'title': 'Your Team & Expertise',
+        'skills_label': 'What are your strongest skills?',
+        'experience_label': 'Your business experience',
+        'hours_label': 'Hours you can dedicate to strategic work per day',
+        'hours_help': 'Beyond running daily operations, how many hours for strategic initiatives?',
+        'education_placeholder': 'e.g. MBA, Industry certification, 10+ years in field',
+    },
+    'ESTABLISHED': {
+        'title': 'Your Team & Expertise',
+        'skills_label': 'What are your core competencies?',
+        'experience_label': 'Your business experience',
+        'hours_label': 'Hours you can dedicate to this initiative per day',
+        'hours_help': 'How many hours daily can you dedicate to the improvements you want?',
+        'education_placeholder': 'e.g. MBA, Executive education, Industry veteran',
+    },
+}
+
+
 class SkillsExperienceForm(forms.Form):
-    """Step 3: Skills and experience."""
+    """Step 3: Skills and experience — adapts to business stage."""
     owner_skills = forms.MultipleChoiceField(
         choices=BusinessProfile.SKILL_CHOICES,
         widget=forms.CheckboxSelectMultiple,
@@ -187,9 +231,85 @@ class SkillsExperienceForm(forms.Form):
         label='Education (optional)',
     )
 
+    def __init__(self, *args, stage='IDEA', **kwargs):
+        super().__init__(*args, **kwargs)
+        config = STEP3_STAGE_CONFIG.get(stage, STEP3_STAGE_CONFIG['IDEA'])
+
+        self.fields['owner_skills'].label = config['skills_label']
+        self.fields['business_experience'].label = config['experience_label']
+        self.fields['hours_per_day'].label = config['hours_label']
+        self.fields['hours_per_day'].help_text = config['hours_help']
+        self.fields['education_background'].widget.attrs['placeholder'] = config['education_placeholder']
+
+        self.stage_title = config['title']
+
+
+STEP4_STAGE_CONFIG = {
+    'IDEA': {
+        'title': 'Industry & Competition',
+        'niche_label': 'Specific niche',
+        'niche_placeholder': 'e.g. Vegan bakery, B2B SaaS for dentists',
+        'model_label': 'Planned business model',
+        'usp_label': 'What will make you different?',
+        'usp_placeholder': 'What will set you apart from competitors?',
+        'competitors_label': 'Known competitors',
+        'competitors_placeholder': 'List any competitors you know (one per line)',
+        'budget_label': 'Startup budget',
+        'location_placeholder': 'City, State or "Online only"',
+    },
+    'PLANNING': {
+        'title': 'Industry & Competition',
+        'niche_label': 'Specific niche',
+        'niche_placeholder': 'e.g. Vegan bakery, B2B SaaS for dentists',
+        'model_label': 'Business model',
+        'usp_label': 'What will make you different?',
+        'usp_placeholder': 'What will set your business apart from competitors?',
+        'competitors_label': 'Known competitors',
+        'competitors_placeholder': 'List competitors you\'ve researched (one per line)',
+        'budget_label': 'Launch budget',
+        'location_placeholder': 'City, State or "Online only"',
+    },
+    'EARLY': {
+        'title': 'Your Market Position',
+        'niche_label': 'Your niche',
+        'niche_placeholder': 'e.g. Organic pet food in Austin, B2B SaaS for dentists',
+        'model_label': 'Business model',
+        'usp_label': 'What makes you different?',
+        'usp_placeholder': 'What do customers say sets you apart?',
+        'competitors_label': 'Main competitors',
+        'competitors_placeholder': 'Who are you competing against? (one per line)',
+        'budget_label': 'Budget for growth',
+        'location_placeholder': 'City, State or "Online only"',
+    },
+    'GROWING': {
+        'title': 'Your Market Position',
+        'niche_label': 'Your market niche',
+        'niche_placeholder': 'e.g. Premium organic pet food, Enterprise HR SaaS',
+        'model_label': 'Primary business model',
+        'usp_label': 'Your competitive advantage',
+        'usp_placeholder': 'What keeps customers choosing you over competitors?',
+        'competitors_label': 'Key competitors',
+        'competitors_placeholder': 'Your main competitors (one per line)',
+        'budget_label': 'Budget for this initiative',
+        'location_placeholder': 'Primary market / City, State',
+    },
+    'ESTABLISHED': {
+        'title': 'Your Market Position',
+        'niche_label': 'Your market segment',
+        'niche_placeholder': 'e.g. Premium organic pet food, Enterprise HR SaaS',
+        'model_label': 'Primary business model',
+        'usp_label': 'Your competitive advantage',
+        'usp_placeholder': 'What is your moat? Why do customers stay?',
+        'competitors_label': 'Key competitors',
+        'competitors_placeholder': 'Your main competitors and emerging threats (one per line)',
+        'budget_label': 'Budget for this initiative',
+        'location_placeholder': 'Primary market / Headquarters',
+    },
+}
+
 
 class IndustryDetailsForm(forms.Form):
-    """Step 4: Industry and competition."""
+    """Step 4: Industry and competition — adapts to business stage."""
     niche = forms.CharField(
         max_length=255, required=False,
         widget=forms.TextInput(attrs={
@@ -225,9 +345,74 @@ class IndustryDetailsForm(forms.Form):
         }),
     )
 
+    def __init__(self, *args, stage='IDEA', **kwargs):
+        super().__init__(*args, **kwargs)
+        config = STEP4_STAGE_CONFIG.get(stage, STEP4_STAGE_CONFIG['IDEA'])
+
+        self.fields['niche'].label = config['niche_label']
+        self.fields['niche'].widget.attrs['placeholder'] = config['niche_placeholder']
+        self.fields['business_model'].label = config['model_label']
+        self.fields['unique_selling_point'].label = config['usp_label']
+        self.fields['unique_selling_point'].widget.attrs['placeholder'] = config['usp_placeholder']
+        self.fields['known_competitors'].label = config['competitors_label']
+        self.fields['known_competitors'].widget.attrs['placeholder'] = config['competitors_placeholder']
+        self.fields['budget_range'].label = config['budget_label']
+        self.fields['location'].widget.attrs['placeholder'] = config['location_placeholder']
+
+        self.stage_title = config['title']
+
+
+STEP5_STAGE_CONFIG = {
+    'IDEA': {
+        'title': 'Your Digital Presence',
+        'website_label': 'I have a website',
+        'domain_label': 'I own a domain name',
+        'branding_label': 'I have a logo / brand identity',
+        'social_label': 'I have social media accounts',
+        'platforms_label': 'Which platforms?',
+        'email_label': 'I have an email list',
+    },
+    'PLANNING': {
+        'title': 'Your Digital Presence',
+        'website_label': 'I have a website',
+        'domain_label': 'I own a domain name',
+        'branding_label': 'I have a logo / brand identity',
+        'social_label': 'I have social media accounts',
+        'platforms_label': 'Which platforms?',
+        'email_label': 'I have an email list',
+    },
+    'EARLY': {
+        'title': 'Your Current Digital Setup',
+        'website_label': 'I have a business website',
+        'domain_label': 'I have a custom domain',
+        'branding_label': 'I have professional branding (logo, colors)',
+        'social_label': 'I have active social media accounts',
+        'platforms_label': 'Which platforms are you active on?',
+        'email_label': 'I have an email list or newsletter',
+    },
+    'GROWING': {
+        'title': 'Your Digital Assets',
+        'website_label': 'We have a business website',
+        'domain_label': 'We have a custom domain',
+        'branding_label': 'We have professional branding',
+        'social_label': 'We have active social media',
+        'platforms_label': 'Which platforms are you active on?',
+        'email_label': 'We have an email list or newsletter',
+    },
+    'ESTABLISHED': {
+        'title': 'Your Digital Assets',
+        'website_label': 'We have a business website',
+        'domain_label': 'We have a custom domain',
+        'branding_label': 'We have established branding',
+        'social_label': 'We have active social media',
+        'platforms_label': 'Which platforms are you active on?',
+        'email_label': 'We have an email list or newsletter',
+    },
+}
+
 
 class DigitalPresenceForm(forms.Form):
-    """Step 5: Current digital presence."""
+    """Step 5: Current digital presence — adapts to business stage."""
     has_website = forms.BooleanField(required=False, label='I have a website')
     has_domain = forms.BooleanField(required=False, label='I own a domain name')
     has_branding = forms.BooleanField(required=False, label='I have a logo / brand identity')
@@ -239,3 +424,16 @@ class DigitalPresenceForm(forms.Form):
         label='Which platforms?',
     )
     has_email_list = forms.BooleanField(required=False, label='I have an email list')
+
+    def __init__(self, *args, stage='IDEA', **kwargs):
+        super().__init__(*args, **kwargs)
+        config = STEP5_STAGE_CONFIG.get(stage, STEP5_STAGE_CONFIG['IDEA'])
+
+        self.fields['has_website'].label = config['website_label']
+        self.fields['has_domain'].label = config['domain_label']
+        self.fields['has_branding'].label = config['branding_label']
+        self.fields['has_social_media'].label = config['social_label']
+        self.fields['social_platforms'].label = config['platforms_label']
+        self.fields['has_email_list'].label = config['email_label']
+
+        self.stage_title = config['title']
