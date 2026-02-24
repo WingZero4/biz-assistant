@@ -223,6 +223,11 @@ class GeneratedDocument(models.Model):
         ('CUSTOMER_EMAIL', 'Customer Email'),
         ('AD_COPY', 'Ad Copy'),
         ('BLOG_POST', 'Blog Post Outline'),
+        ('GRAND_SLAM_OFFER', 'Grand Slam Offer'),
+        ('LEAD_MAGNET', 'Lead Magnet'),
+        ('OUTREACH_SCRIPT', 'Outreach Script'),
+        ('SALES_SCRIPT', 'Sales Script'),
+        ('VALUE_LADDER', 'Value Ladder Map'),
     ]
     PLATFORM_CHOICES = [
         ('', 'General'),
